@@ -41,6 +41,7 @@ const RegisterRoute_1 = __importDefault(require("./Routes/AuthRoutes/RegisterRou
 const otpRoute_1 = __importDefault(require("./Routes/AuthRoutes/otpRoute"));
 const AuthRoute_1 = __importDefault(require("./Routes/AuthRoutes/AuthRoute"));
 const RefreshTokenRoute_1 = __importDefault(require("./Routes/AuthRoutes/RefreshTokenRoute"));
+const googleAuthRoute_1 = __importDefault(require("./Routes/AuthRoutes/googleAuthRoute"));
 const PORT = process.env.PORT || 3500;
 // connect to mongodb database
 (0, dbConnection_1.default)();
@@ -58,6 +59,7 @@ app.use(express_1.default.json());
 app.use("/register", RegisterRoute_1.default);
 app.use("/verify/otp", otpRoute_1.default);
 app.use("/auth", AuthRoute_1.default);
+app.use("/auth/google", googleAuthRoute_1.default);
 app.use("/refreshToken", RefreshTokenRoute_1.default);
 // authenticate users using jwt for private routes
 // app.use(verifyJWT);

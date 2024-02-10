@@ -16,7 +16,9 @@ const userSchema = new mongoose_1.default.Schema({
     },
     password: {
         type: String,
-        required: true,
+    },
+    googleId: {
+        type: String,
     },
     phone: {
         type: String,
@@ -38,7 +40,7 @@ const userSchema = new mongoose_1.default.Schema({
     },
     blocked: {
         type: Boolean,
-        default: false
+        default: false,
     },
     refreshToken: String,
 });

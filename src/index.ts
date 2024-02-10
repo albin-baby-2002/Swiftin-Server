@@ -16,6 +16,8 @@ import registerRoute from "./Routes/AuthRoutes/RegisterRoute";
 import otpRoute from "./Routes/AuthRoutes/otpRoute";
 import authRoute from "./Routes/AuthRoutes/AuthRoute";
 import refreshTokenRoute from "./Routes/AuthRoutes/RefreshTokenRoute"
+import googleAuthRoute from "./Routes/AuthRoutes/googleAuthRoute"
+
 const PORT = process.env.PORT || 3500;
 
 // connect to mongodb database
@@ -43,6 +45,7 @@ app.use(express.json());
 app.use("/register", registerRoute);
 app.use("/verify/otp", otpRoute);
 app.use("/auth", authRoute);
+app.use("/auth/google", googleAuthRoute);
 app.use("/refreshToken",refreshTokenRoute);
 
 // authenticate users using jwt for private routes

@@ -11,10 +11,11 @@ interface User extends mongoose.Document {
   email: string;
   password: string;
   roles: roles;
-  phone:string;
+  googleId: string;
+  phone: string;
   image: string;
-  verified:boolean;
-  blocked:boolean;
+  verified: boolean;
+  blocked: boolean;
   refreshToken: string;
 }
 
@@ -30,7 +31,9 @@ const userSchema = new mongoose.Schema<User>({
   },
   password: {
     type: String,
-    required: true,
+  },
+  googleId: {
+    type: String,
   },
   phone: {
     type: String,
@@ -50,9 +53,9 @@ const userSchema = new mongoose.Schema<User>({
     type: Boolean,
     default: false,
   },
-  blocked:{
-    type:Boolean,
-    default:false
+  blocked: {
+    type: Boolean,
+    default: false,
   },
   refreshToken: String,
 });
