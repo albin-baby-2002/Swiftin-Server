@@ -15,8 +15,9 @@ import corsOptions from "./config/corsOptions";
 import registerRoute from "./Routes/AuthRoutes/RegisterRoute";
 import otpRoute from "./Routes/AuthRoutes/otpRoute";
 import authRoute from "./Routes/AuthRoutes/AuthRoute";
-import refreshTokenRoute from "./Routes/AuthRoutes/RefreshTokenRoute"
-import googleAuthRoute from "./Routes/AuthRoutes/googleAuthRoute"
+import refreshTokenRoute from "./Routes/AuthRoutes/RefreshTokenRoute";
+import googleAuthRoute from "./Routes/AuthRoutes/googleAuthRoute";
+import logoutRoute from "./Routes/AuthRoutes/LogoutRoute"
 
 const PORT = process.env.PORT || 3500;
 
@@ -26,7 +27,7 @@ connectDB();
 
 // access-control-allow-credentials
 app.use((req, res, next) => {
-  console.log(`Requested URL: ${req.url}` ,req.headers.cookie);
+  console.log(`Requested URL: ${req.url}`, req.headers.cookie);
   next();
 });
 
@@ -46,7 +47,8 @@ app.use("/register", registerRoute);
 app.use("/verify/otp", otpRoute);
 app.use("/auth", authRoute);
 app.use("/auth/google", googleAuthRoute);
-app.use("/refreshToken",refreshTokenRoute);
+app.use("/refreshToken", refreshTokenRoute);
+app.use("/logout",logoutRoute);
 
 // authenticate users using jwt for private routes
 

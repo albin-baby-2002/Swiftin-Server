@@ -42,6 +42,7 @@ const otpRoute_1 = __importDefault(require("./Routes/AuthRoutes/otpRoute"));
 const AuthRoute_1 = __importDefault(require("./Routes/AuthRoutes/AuthRoute"));
 const RefreshTokenRoute_1 = __importDefault(require("./Routes/AuthRoutes/RefreshTokenRoute"));
 const googleAuthRoute_1 = __importDefault(require("./Routes/AuthRoutes/googleAuthRoute"));
+const LogoutRoute_1 = __importDefault(require("./Routes/AuthRoutes/LogoutRoute"));
 const PORT = process.env.PORT || 3500;
 // connect to mongodb database
 (0, dbConnection_1.default)();
@@ -61,6 +62,7 @@ app.use("/verify/otp", otpRoute_1.default);
 app.use("/auth", AuthRoute_1.default);
 app.use("/auth/google", googleAuthRoute_1.default);
 app.use("/refreshToken", RefreshTokenRoute_1.default);
+app.use("/logout", LogoutRoute_1.default);
 // authenticate users using jwt for private routes
 // app.use(verifyJWT);
 // app.use("/admin/users", verifyRoles(ROLES_LIST.Admin), userManagementRoutes);

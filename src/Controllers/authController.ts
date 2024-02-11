@@ -32,6 +32,10 @@ export const authController = async (
       const foundUser = await User.findOne({ email });
 
       if (!foundUser) return res.sendStatus(404); // 404 - User Not found
+      
+      if(!foundUser.password && foundUser.googleId){
+        return res.status(400).json({ message: "This Account don't have password only Google Login Available" });
+      }
 
       const match = await bcrypt.compare(password, foundUser.password);
 

@@ -34,6 +34,9 @@ const authController = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
             const foundUser = yield userModel_1.default.findOne({ email });
             if (!foundUser)
                 return res.sendStatus(404); // 404 - User Not found
+            if (!foundUser.password && foundUser.googleId) {
+                return res.status(400).json({ message: "This Account don't have password only Google Login Available" });
+            }
             const match = yield bcrypt_1.default.compare(password, foundUser.password);
             if (match) {
                 if (!foundUser.verified) {
