@@ -42,6 +42,10 @@ const userSchema = new mongoose_1.default.Schema({
         type: Boolean,
         default: false,
     },
+    joinedDate: {
+        type: Date,
+        default: Date.now
+    },
     refreshToken: String,
 });
 const UserModel = mongoose_1.default.model("User", userSchema);

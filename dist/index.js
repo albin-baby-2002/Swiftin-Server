@@ -43,12 +43,16 @@ const AuthRoute_1 = __importDefault(require("./Routes/AuthRoutes/AuthRoute"));
 const RefreshTokenRoute_1 = __importDefault(require("./Routes/AuthRoutes/RefreshTokenRoute"));
 const googleAuthRoute_1 = __importDefault(require("./Routes/AuthRoutes/googleAuthRoute"));
 const LogoutRoute_1 = __importDefault(require("./Routes/AuthRoutes/LogoutRoute"));
+const JwtVerification_1 = __importDefault(require("./Middlewares/JwtVerification"));
+const VerifyRoles_1 = __importDefault(require("./Middlewares/VerifyRoles"));
+const allowedRoles_1 = __importDefault(require("./config/allowedRoles"));
+const AdminRoutes_1 = __importDefault(require("./Routes/AdminRoutes/AdminRoutes"));
 const PORT = process.env.PORT || 3500;
 // connect to mongodb database
 (0, dbConnection_1.default)();
 // access-control-allow-credentials
 app.use((req, res, next) => {
-    console.log(`Requested URL: ${req.url}`, req.headers.cookie);
+    console.log(`Requested URL: ${req.url}`);
     next();
 });
 app.use(Credentials_1.default);
@@ -64,8 +68,8 @@ app.use("/auth/google", googleAuthRoute_1.default);
 app.use("/refreshToken", RefreshTokenRoute_1.default);
 app.use("/logout", LogoutRoute_1.default);
 // authenticate users using jwt for private routes
-// app.use(verifyJWT);
-// app.use("/admin/users", verifyRoles(ROLES_LIST.Admin), userManagementRoutes);
+app.use(JwtVerification_1.default);
+app.use("/admin/", (0, VerifyRoles_1.default)(allowedRoles_1.default.Admin), AdminRoutes_1.default);
 // app.use("/user", verifyRoles(ROLES_LIST.User), userRouter);
 // 404 Error Middleware
 app.use("*", (req, res, next) => {

@@ -17,7 +17,11 @@ import otpRoute from "./Routes/AuthRoutes/otpRoute";
 import authRoute from "./Routes/AuthRoutes/AuthRoute";
 import refreshTokenRoute from "./Routes/AuthRoutes/RefreshTokenRoute";
 import googleAuthRoute from "./Routes/AuthRoutes/googleAuthRoute";
-import logoutRoute from "./Routes/AuthRoutes/LogoutRoute"
+import logoutRoute from "./Routes/AuthRoutes/LogoutRoute";
+import verifyJWT from "./Middlewares/JwtVerification";
+import verifyRoles from "./Middlewares/VerifyRoles";
+import ROLES_LIST from "./config/allowedRoles";
+import adminRoutes from "./Routes/AdminRoutes/AdminRoutes";
 
 const PORT = process.env.PORT || 3500;
 
@@ -27,7 +31,7 @@ connectDB();
 
 // access-control-allow-credentials
 app.use((req, res, next) => {
-  console.log(`Requested URL: ${req.url}`, req.headers.cookie);
+  console.log(`Requested URL: ${req.url}`);
   next();
 });
 
@@ -48,13 +52,13 @@ app.use("/verify/otp", otpRoute);
 app.use("/auth", authRoute);
 app.use("/auth/google", googleAuthRoute);
 app.use("/refreshToken", refreshTokenRoute);
-app.use("/logout",logoutRoute);
+app.use("/logout", logoutRoute);
 
 // authenticate users using jwt for private routes
 
-// app.use(verifyJWT);
+app.use(verifyJWT);
 
-// app.use("/admin/users", verifyRoles(ROLES_LIST.Admin), userManagementRoutes);
+app.use("/admin/", verifyRoles(ROLES_LIST.Admin), adminRoutes);
 
 // app.use("/user", verifyRoles(ROLES_LIST.User), userRouter);
 

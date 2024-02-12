@@ -17,6 +17,7 @@ interface User extends mongoose.Document {
   verified: boolean;
   blocked: boolean;
   refreshToken: string;
+  joinedDate:Date;
 }
 
 const userSchema = new mongoose.Schema<User>({
@@ -56,6 +57,10 @@ const userSchema = new mongoose.Schema<User>({
   blocked: {
     type: Boolean,
     default: false,
+  },
+  joinedDate:{
+    type:Date,
+    default:Date.now
   },
   refreshToken: String,
 });

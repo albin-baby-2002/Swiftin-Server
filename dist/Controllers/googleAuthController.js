@@ -68,6 +68,7 @@ const handleGoogleAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, f
                     googleId: sub,
                     image: picture,
                     email,
+                    verified: true,
                 });
                 yield newUser.save();
                 user = newUser;
