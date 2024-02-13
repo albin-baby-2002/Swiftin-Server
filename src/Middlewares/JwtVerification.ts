@@ -29,7 +29,7 @@ const verifyJWT = (req: CustomRequest, res: Response, next: NextFunction) => {
   const authHeader = (req.headers.authorization ||
     req.headers.Authorization) as string;
 
-  console.log(authHeader);
+  //   console.log(authHeader);
 
   if (!authHeader?.startsWith("Bearer ")) return res.sendStatus(401); // unauthorized
 
@@ -54,7 +54,7 @@ const verifyJWT = (req: CustomRequest, res: Response, next: NextFunction) => {
 
     next();
 
-    console.log("jwt passed");
+    // console.log("jwt passed");
   } catch (err: any) {
     next(err);
   }
