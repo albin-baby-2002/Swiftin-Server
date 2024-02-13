@@ -18,6 +18,7 @@ interface User extends mongoose.Document {
   blocked: boolean;
   refreshToken: string;
   joinedDate:Date;
+  wallet:number
 }
 
 const userSchema = new mongoose.Schema<User>({
@@ -63,6 +64,10 @@ const userSchema = new mongoose.Schema<User>({
     default:Date.now
   },
   refreshToken: String,
+  wallet:{
+    type:Number,
+    default:0
+  }
 });
 
 const UserModel = mongoose.model("User", userSchema);

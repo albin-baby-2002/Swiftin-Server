@@ -47,6 +47,10 @@ const userSchema = new mongoose_1.default.Schema({
         default: Date.now
     },
     refreshToken: String,
+    wallet: {
+        type: Number,
+        default: 0
+    }
 });
 const UserModel = mongoose_1.default.model("User", userSchema);
 exports.default = UserModel;
