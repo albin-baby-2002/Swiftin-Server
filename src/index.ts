@@ -22,6 +22,7 @@ import verifyJWT from "./Middlewares/JwtVerification";
 import verifyRoles from "./Middlewares/VerifyRoles";
 import ROLES_LIST from "./config/allowedRoles";
 import adminRoutes from "./Routes/AdminRoutes/AdminRoutes";
+import userRoutes from "./Routes/UserRoutes/UserRoutes"
 
 const PORT = process.env.PORT || 3500;
 
@@ -59,6 +60,7 @@ app.use("/logout", logoutRoute);
 app.use(verifyJWT);
 
 app.use("/admin/", verifyRoles(ROLES_LIST.Admin), adminRoutes);
+app.use("/user/", verifyRoles(ROLES_LIST.User), userRoutes );
 
 // app.use("/user", verifyRoles(ROLES_LIST.User), userRouter);
 

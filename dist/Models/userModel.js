@@ -44,13 +44,20 @@ const userSchema = new mongoose_1.default.Schema({
     },
     joinedDate: {
         type: Date,
-        default: Date.now
+        default: Date.now,
     },
     refreshToken: String,
     wallet: {
         type: Number,
-        default: 0
-    }
+        default: 0,
+    },
+    aboutYou: {
+        type: String,
+    },
+    address: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "PersonalAddress",
+    },
 });
 const UserModel = mongoose_1.default.model("User", userSchema);
 exports.default = UserModel;

@@ -17,8 +17,10 @@ interface User extends mongoose.Document {
   verified: boolean;
   blocked: boolean;
   refreshToken: string;
-  joinedDate:Date;
-  wallet:number
+  joinedDate: Date;
+  wallet: number;
+  aboutYou: string;
+  address: mongoose.Schema.Types.ObjectId;
 }
 
 const userSchema = new mongoose.Schema<User>({
@@ -59,15 +61,22 @@ const userSchema = new mongoose.Schema<User>({
     type: Boolean,
     default: false,
   },
-  joinedDate:{
-    type:Date,
-    default:Date.now
+  joinedDate: {
+    type: Date,
+    default: Date.now,
   },
   refreshToken: String,
-  wallet:{
-    type:Number,
-    default:0
-  }
+  wallet: {
+    type: Number,
+    default: 0,
+  },
+  aboutYou: {
+    type: String,
+  },
+  address: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "PersonalAddress",
+  },
 });
 
 const UserModel = mongoose.model("User", userSchema);
