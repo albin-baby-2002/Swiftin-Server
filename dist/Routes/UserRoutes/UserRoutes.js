@@ -8,4 +8,5 @@ const UserController_1 = require("../../Controllers/UserControllers/UserControll
 const router = express_1.default.Router();
 router.get("/profile", UserController_1.getProfileInfo);
 router.patch("/profile", UserController_1.editProfileHandler);
+router.patch("/profileImg", UserController_1.profileImgChangeHandler);
 exports.default = router;

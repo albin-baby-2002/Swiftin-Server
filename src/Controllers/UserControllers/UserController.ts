@@ -48,6 +48,7 @@ export const getProfileInfo = async (
           aboutYou: 1,
           phone: 1,
           wallet: 1,
+          image:1,
           address:1,
           addressLine: "$addressData.addressLine",
           locality: "$addressData.locality",
@@ -144,3 +145,41 @@ export const editProfileHandler = async (
     next(err);
   }
 };
+
+
+ export const profileImgChangeHandler = async (
+   req: CustomRequest,
+   res: Response,
+   next: NextFunction
+ ) => {
+   try {
+     const userID = req.userInfo?.id;
+
+     if (!userID) {
+       return res.status(400).json({ message: "failed to identify user " });
+     }
+
+    const {publicID
+     } = req.body;
+
+     console.log(req.body,'img upload ');
+
+     const user = await User.findById(userID);
+
+     if (user) {
+        
+        user.image = publicID;
+        
+         await user.save()
+     
+         return res.sendStatus(200);
+       }
+
+    
+     
+   } catch (err: any) {
+     console.log(err);
+
+     next(err);
+   }
+ };;

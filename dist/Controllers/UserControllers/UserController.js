@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.editProfileHandler = exports.getProfileInfo = void 0;
+exports.profileImgChangeHandler = exports.editProfileHandler = exports.getProfileInfo = void 0;
 const userModel_1 = __importDefault(require("../../Models/userModel"));
 const personalAddress_1 = require("../../Models/personalAddress");
 const mongoose_1 = __importDefault(require("mongoose"));
@@ -48,6 +48,7 @@ const getProfileInfo = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
                     aboutYou: 1,
                     phone: 1,
                     wallet: 1,
+                    image: 1,
                     address: 1,
                     addressLine: "$addressData.addressLine",
                     locality: "$addressData.locality",
@@ -117,3 +118,26 @@ const editProfileHandler = (req, res, next) => __awaiter(void 0, void 0, void 0,
     }
 });
 exports.editProfileHandler = editProfileHandler;
+const profileImgChangeHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c;
+    try {
+        const userID = (_c = req.userInfo) === null || _c === void 0 ? void 0 : _c.id;
+        if (!userID) {
+            return res.status(400).json({ message: "failed to identify user " });
+        }
+        const { publicID } = req.body;
+        console.log(req.body, 'img upload ');
+        const user = yield userModel_1.default.findById(userID);
+        if (user) {
+            user.image = publicID;
+            yield user.save();
+            return res.sendStatus(200);
+        }
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+});
+exports.profileImgChangeHandler = profileImgChangeHandler;
+;
