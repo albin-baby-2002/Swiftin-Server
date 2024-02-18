@@ -24,6 +24,7 @@ export const getProfileInfo = async (
     let userID = new mongoose.Types.ObjectId(req.userInfo.id);
 
     console.log(userID);
+
     const userData = await User.aggregate([
       {
         $match: {
@@ -39,7 +40,7 @@ export const getProfileInfo = async (
         },
       },
       {
-        $unwind: "$addressData",
+        $unwind: { path: "$addressData", preserveNullAndEmptyArrays: true },
       },
       {
         $project: {
@@ -48,8 +49,8 @@ export const getProfileInfo = async (
           aboutYou: 1,
           phone: 1,
           wallet: 1,
-          image:1,
-          address:1,
+          image: 1,
+          address: 1,
           addressLine: "$addressData.addressLine",
           locality: "$addressData.locality",
           city: "$addressData.city",
@@ -60,6 +61,8 @@ export const getProfileInfo = async (
         },
       },
     ]);
+
+    console.log(userData);
 
     return res.status(200).json({ userData: userData[0] });
   } catch (err: any) {
@@ -146,40 +149,34 @@ export const editProfileHandler = async (
   }
 };
 
+export const profileImgChangeHandler = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userID = req.userInfo?.id;
 
- export const profileImgChangeHandler = async (
-   req: CustomRequest,
-   res: Response,
-   next: NextFunction
- ) => {
-   try {
-     const userID = req.userInfo?.id;
+    if (!userID) {
+      return res.status(400).json({ message: "failed to identify user " });
+    }
 
-     if (!userID) {
-       return res.status(400).json({ message: "failed to identify user " });
-     }
+    const { publicID } = req.body;
 
-    const {publicID
-     } = req.body;
+    console.log(req.body, "img upload ");
 
-     console.log(req.body,'img upload ');
+    const user = await User.findById(userID);
 
-     const user = await User.findById(userID);
+    if (user) {
+      user.image = publicID;
 
-     if (user) {
-        
-        user.image = publicID;
-        
-         await user.save()
-     
-         return res.sendStatus(200);
-       }
+      await user.save();
 
-    
-     
-   } catch (err: any) {
-     console.log(err);
+      return res.sendStatus(200);
+    }
+  } catch (err: any) {
+    console.log(err);
 
-     next(err);
-   }
- };;
+    next(err);
+  }
+};

@@ -39,7 +39,7 @@ const getProfileInfo = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
                 },
             },
             {
-                $unwind: "$addressData",
+                $unwind: { path: "$addressData", preserveNullAndEmptyArrays: true },
             },
             {
                 $project: {
@@ -60,6 +60,7 @@ const getProfileInfo = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
                 },
             },
         ]);
+        console.log(userData);
         return res.status(200).json({ userData: userData[0] });
     }
     catch (err) {
@@ -126,7 +127,7 @@ const profileImgChangeHandler = (req, res, next) => __awaiter(void 0, void 0, vo
             return res.status(400).json({ message: "failed to identify user " });
         }
         const { publicID } = req.body;
-        console.log(req.body, 'img upload ');
+        console.log(req.body, "img upload ");
         const user = yield userModel_1.default.findById(userID);
         if (user) {
             user.image = publicID;
@@ -140,4 +141,3 @@ const profileImgChangeHandler = (req, res, next) => __awaiter(void 0, void 0, vo
     }
 });
 exports.profileImgChangeHandler = profileImgChangeHandler;
-;

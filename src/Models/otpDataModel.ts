@@ -1,11 +1,6 @@
 import mongoose from "mongoose";
 
-interface User extends mongoose.Document {
-  userId: string;
-  otp: string;
-  createdAt: Date;
-  expiresAt: Date;
-}
+
 
 const otpDataSchema = new mongoose.Schema({
   userId: {
@@ -23,7 +18,7 @@ const otpDataSchema = new mongoose.Schema({
   },
 });
 
-// otpDataSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
+
 
 const otp = mongoose.model("OtpData", otpDataSchema);
 

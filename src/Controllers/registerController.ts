@@ -16,8 +16,8 @@ const userSchema = z.object({
         message:
           "minimum 8 char & min one (uppercase & lowercase letter, special char & number)",
       }
-    )
-}); 
+    ),
+});
 
 export const newUserRegister = async (
   req: Request,
@@ -25,46 +25,48 @@ export const newUserRegister = async (
   next: NextFunction
 ) => {
   const userData = req.body;
-  
-   const validationResult = userSchema.safeParse(userData);
-    
-   if (!validationResult.success) {
+
+  const validationResult = userSchema.safeParse(userData);
+
+  if (!validationResult.success) {
     const validationError: ZodError = validationResult.error;
-    
-    res.status(400).json({message:validationError.errors[0].message})
-    
-   }
-   
-   if(validationResult.success){
-    
-       const {email,username,password} = validationResult.data;
-        try {
-          const duplicate = await User.findOne({ email });
 
-          if (duplicate) return res.sendStatus(409); // Conflict
+    res.status(400).json({ message: validationError.errors[0].message });
+  }
 
-          const hashedPwd = await bcrypt.hash(password, 10);
+  if (validationResult.success) {
+    const { email, username, password } = validationResult.data;
+    try {
+      const existingUser = await User.findOne({ email });
 
-          const newUser = new User({
-            username,
-            password: hashedPwd,
-            email,
-          });
+      if (existingUser?.verified) {
+        return res.sendStatus(409);
+      }
 
-          newUser.save();
+      if (existingUser && !existingUser?.verified) {
+        await sendOtpEmail(existingUser);
+         return res
+          .status(200)
+          .json({ userId: existingUser._id, email: existingUser.email });
+      }
 
-          await sendOtpEmail(newUser);
+      const hashedPwd = await bcrypt.hash(password, 10);
 
-          res.status(201).json({ userId: newUser._id, email: newUser.email });
-          
-        } catch (err: any) {
-          console.log(err);
+      const newUser = new User({
+        username,
+        password: hashedPwd,
+        email,
+      });
 
-          next(err);
-        }
-   }
-   
-   
+      newUser.save();
 
- 
+      await sendOtpEmail(newUser);
+
+      res.status(201).json({ userId: newUser._id, email: newUser.email });
+    } catch (err: any) {
+      console.log(err);
+
+      next(err);
+    }
+  }
 };

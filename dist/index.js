@@ -63,7 +63,7 @@ console.log(path_1.default.join(__dirname, "..", "public"));
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
 app.use("/register", RegisterRoute_1.default);
-app.use("/verify/otp", otpRoute_1.default);
+app.use("/otp/", otpRoute_1.default);
 app.use("/auth", AuthRoute_1.default);
 app.use("/auth/google", googleAuthRoute_1.default);
 app.use("/refreshToken", RefreshTokenRoute_1.default);

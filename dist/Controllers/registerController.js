@@ -24,7 +24,7 @@ const userSchema = zod_1.z.object({
         .string()
         .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
         message: "minimum 8 char & min one (uppercase & lowercase letter, special char & number)",
-    })
+    }),
 });
 const newUserRegister = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const userData = req.body;
@@ -36,9 +36,16 @@ const newUserRegister = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
     if (validationResult.success) {
         const { email, username, password } = validationResult.data;
         try {
-            const duplicate = yield userModel_1.default.findOne({ email });
-            if (duplicate)
-                return res.sendStatus(409); // Conflict
+            const existingUser = yield userModel_1.default.findOne({ email });
+            if (existingUser === null || existingUser === void 0 ? void 0 : existingUser.verified) {
+                return res.sendStatus(409);
+            }
+            if (existingUser && !(existingUser === null || existingUser === void 0 ? void 0 : existingUser.verified)) {
+                yield (0, userVerificationHelper_1.sendOtpEmail)(existingUser);
+                return res
+                    .status(200)
+                    .json({ userId: existingUser._id, email: existingUser.email });
+            }
             const hashedPwd = yield bcrypt_1.default.hash(password, 10);
             const newUser = new userModel_1.default({
                 username,

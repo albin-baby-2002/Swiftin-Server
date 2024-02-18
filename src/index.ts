@@ -49,7 +49,8 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use("/register", registerRoute);
-app.use("/verify/otp", otpRoute);
+
+app.use("/otp/", otpRoute);
 app.use("/auth", authRoute);
 app.use("/auth/google", googleAuthRoute);
 app.use("/refreshToken", refreshTokenRoute);

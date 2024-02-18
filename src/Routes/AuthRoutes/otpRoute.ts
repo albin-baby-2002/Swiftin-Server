@@ -1,8 +1,13 @@
 import express from "express";
-import { verifyOtpHandler } from "../../Controllers/verifyOtpController";
+import {
+  resendOtpHandler,
+  verifyOtpHandler,
+} from "../../Controllers/OtpController";
 
 const router = express.Router();
 
-router.post("/", verifyOtpHandler);
+router.post("/verify", verifyOtpHandler);
+
+router.post("/resend", resendOtpHandler);
 
 export default router;
