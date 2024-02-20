@@ -42,6 +42,7 @@ const handleGoogleAuth = async (
       let user = await User.findOne({ email });
 
       if (user && !user.googleId) {
+        user.username = name;
         user.googleId = sub;
 
         await user.save();

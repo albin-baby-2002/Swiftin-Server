@@ -41,7 +41,7 @@ const authController = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
             if (match) {
                 if (!foundUser.verified) {
                     console.log("email not verified");
-                    return res.status(400).json({ message: "Email not verified" });
+                    return res.status(400).json({ message: "Email not verified. sign Up again and complete verification " });
                 }
                 const roles = Object.values(foundUser.roles).filter(Boolean);
                 const ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET;
@@ -73,7 +73,7 @@ const authController = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
             else {
                 return res
                     .status(400)
-                    .json({ message: "Enter the right password" });
+                    .json({ message: "Wrong password" });
             }
         }
         catch (err) {

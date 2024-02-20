@@ -59,6 +59,7 @@ const handleGoogleAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, f
             const { sub, name, email, picture } = userInfo;
             let user = yield userModel_1.default.findOne({ email });
             if (user && !user.googleId) {
+                user.username = name;
                 user.googleId = sub;
                 yield user.save();
             }

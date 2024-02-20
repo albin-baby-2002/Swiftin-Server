@@ -39,9 +39,10 @@ const dotenv = __importStar(require("dotenv"));
 dotenv.config();
 const userModel_1 = __importDefault(require("../Models/userModel"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const mongoose_1 = __importDefault(require("mongoose"));
 const handleRefreshToken = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const cookies = req.cookies;
-    console.log('req for refresh');
+    console.log("req for refresh");
     console.log(cookies);
     if (!(cookies === null || cookies === void 0 ? void 0 : cookies.jwt))
         return res.sendStatus(401); // unauthorized
@@ -56,8 +57,12 @@ const handleRefreshToken = (req, res, next) => __awaiter(void 0, void 0, void 0,
         if (!foundUser)
             return res.sendStatus(403); //Forbidden
         jsonwebtoken_1.default.verify(refreshToken, REFRESH_SECRET, (err, decoded) => {
-            if (err || foundUser.username !== decoded.username)
+            let decodedID = new mongoose_1.default.Types.ObjectId(decoded.id);
+            let userID = new mongoose_1.default.Types.ObjectId(foundUser._id);
+            if (err || !userID.equals(decodedID)) {
+                console.log(foundUser, decoded);
                 return res.sendStatus(403);
+            }
             const roles = Object.values(foundUser.roles).filter((role) => role);
             const accessToken = jsonwebtoken_1.default.sign({
                 UserInfo: {

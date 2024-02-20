@@ -43,7 +43,7 @@ export const authController = async (
         if (!foundUser.verified) {
           console.log("email not verified");
 
-          return res.status(400).json({ message: "Email not verified" });
+          return res.status(400).json({ message: "Email not verified. sign Up again and complete verification " });
         }
 
         const roles = Object.values(foundUser.roles).filter(Boolean);
@@ -92,7 +92,7 @@ export const authController = async (
       } else {
         return res
           .status(400)
-          .json({ message: "Enter the right password" });
+          .json({ message: "Wrong password" });
       }
     } catch (err: any) {
       console.log(err);

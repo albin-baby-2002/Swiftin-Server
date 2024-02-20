@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import User from "../Models/userModel";
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const handleRefreshToken = async (
   req: Request,
@@ -12,10 +13,10 @@ const handleRefreshToken = async (
   next: NextFunction
 ) => {
   const cookies = req.cookies;
-  
-  console.log('req for refresh')
 
-  console.log(cookies)
+  console.log("req for refresh");
+
+  console.log(cookies);
 
   if (!cookies?.jwt) return res.sendStatus(401); // unauthorized
 
@@ -35,8 +36,16 @@ const handleRefreshToken = async (
     if (!foundUser) return res.sendStatus(403); //Forbidden
 
     jwt.verify(refreshToken, REFRESH_SECRET, (err: any, decoded: any) => {
-      if (err || foundUser.username !== decoded.username)
+      let decodedID = new mongoose.Types.ObjectId(decoded.id);
+
+      let userID = new mongoose.Types.ObjectId(foundUser._id);
+
+
+      if (err || !userID.equals(decodedID)) {
+        console.log(foundUser, decoded);
+
         return res.sendStatus(403);
+      }
 
       const roles = Object.values(foundUser.roles).filter((role) => role);
 
