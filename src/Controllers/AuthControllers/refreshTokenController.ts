@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import bcrypt from "bcrypt";
-import User from "../Models/userModel";
+import User from "../../Models/userModel";
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import mongoose from "mongoose";
@@ -39,7 +39,6 @@ const handleRefreshToken = async (
       let decodedID = new mongoose.Types.ObjectId(decoded.id);
 
       let userID = new mongoose.Types.ObjectId(foundUser._id);
-
 
       if (err || !userID.equals(decodedID)) {
         console.log(foundUser, decoded);

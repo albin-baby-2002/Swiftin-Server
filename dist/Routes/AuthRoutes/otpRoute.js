@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const OtpController_1 = require("../../Controllers/OtpController");
+const OtpController_1 = require("../../Controllers/AuthControllers/OtpController");
 const router = express_1.default.Router();
 router.post("/verify", OtpController_1.verifyOtpHandler);
 router.post("/resend", OtpController_1.resendOtpHandler);

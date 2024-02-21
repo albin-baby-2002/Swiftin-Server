@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 import jwt from "jsonwebtoken";
 import { google } from "googleapis";
-import User from "../Models/userModel";
+import User from "../../Models/userModel";
 import { Request, Response, NextFunction } from "express";
 import { JWT, OAuth2Client } from "google-auth-library";
 import { error } from "console";

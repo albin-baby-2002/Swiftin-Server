@@ -14,7 +14,7 @@ import credentials from "./Middlewares/Credentials";
 import corsOptions from "./config/corsOptions";
 import registerRoute from "./Routes/AuthRoutes/RegisterRoute";
 import otpRoute from "./Routes/AuthRoutes/otpRoute";
-import authRoute from "./Routes/AuthRoutes/AuthRoute";
+import loginRoute from "./Routes/AuthRoutes/loginRoute";
 import refreshTokenRoute from "./Routes/AuthRoutes/RefreshTokenRoute";
 import googleAuthRoute from "./Routes/AuthRoutes/googleAuthRoute";
 import logoutRoute from "./Routes/AuthRoutes/LogoutRoute";
@@ -23,6 +23,7 @@ import verifyRoles from "./Middlewares/VerifyRoles";
 import ROLES_LIST from "./config/allowedRoles";
 import adminRoutes from "./Routes/AdminRoutes/AdminRoutes";
 import userRoutes from "./Routes/UserRoutes/UserRoutes"
+import propertyRoutes from "./Routes/PropertyRoutes/propertyRoutes"
 
 const PORT = process.env.PORT || 3500;
 
@@ -51,7 +52,7 @@ app.use(express.json());
 app.use("/register", registerRoute);
 
 app.use("/otp/", otpRoute);
-app.use("/auth", authRoute);
+app.use("/auth", loginRoute);
 app.use("/auth/google", googleAuthRoute);
 app.use("/refreshToken", refreshTokenRoute);
 app.use("/logout", logoutRoute);
@@ -62,6 +63,7 @@ app.use(verifyJWT);
 
 app.use("/admin/", verifyRoles(ROLES_LIST.Admin), adminRoutes);
 app.use("/user/", verifyRoles(ROLES_LIST.User), userRoutes );
+app.use("/property/",verifyRoles(ROLES_LIST.User),propertyRoutes)
 
 // app.use("/user", verifyRoles(ROLES_LIST.User), userRouter);
 

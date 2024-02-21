@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
 
-import User from "../Models/userModel";
+import User from "../../Models/userModel";
 import { ZodError, z } from "zod";
 import jwt from "jsonwebtoken";
 
@@ -10,7 +10,7 @@ const authSchema = z.object({
   password: z.string().min(8, "Password should be at least 8 character long"),
 });
 
-export const authController = async (
+export const loginController = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -32,9 +32,14 @@ export const authController = async (
       const foundUser = await User.findOne({ email });
 
       if (!foundUser) return res.sendStatus(404); // 404 - User Not found
-      
-      if(!foundUser.password && foundUser.googleId){
-        return res.status(400).json({ message: "This Account don't have password only Google Login Available" });
+
+      if (!foundUser.password && foundUser.googleId) {
+        return res
+          .status(400)
+          .json({
+            message:
+              "This Account don't have password only Google Login Available",
+          });
       }
 
       const match = await bcrypt.compare(password, foundUser.password);
@@ -43,7 +48,12 @@ export const authController = async (
         if (!foundUser.verified) {
           console.log("email not verified");
 
-          return res.status(400).json({ message: "Email not verified. sign Up again and complete verification " });
+          return res
+            .status(400)
+            .json({
+              message:
+                "Email not verified. sign Up again and complete verification ",
+            });
         }
 
         const roles = Object.values(foundUser.roles).filter(Boolean);
@@ -86,13 +96,9 @@ export const authController = async (
           maxAge: 24 * 60 * 60 * 1000,
         });
 
-         res
-          .status(200)
-          .json({ roles, accessToken, user: foundUser.username });
+        res.status(200).json({ roles, accessToken, user: foundUser.username });
       } else {
-        return res
-          .status(400)
-          .json({ message: "Wrong password" });
+        return res.status(400).json({ message: "Wrong password" });
       }
     } catch (err: any) {
       console.log(err);

@@ -39,7 +39,7 @@ const Credentials_1 = __importDefault(require("./Middlewares/Credentials"));
 const corsOptions_1 = __importDefault(require("./config/corsOptions"));
 const RegisterRoute_1 = __importDefault(require("./Routes/AuthRoutes/RegisterRoute"));
 const otpRoute_1 = __importDefault(require("./Routes/AuthRoutes/otpRoute"));
-const AuthRoute_1 = __importDefault(require("./Routes/AuthRoutes/AuthRoute"));
+const loginRoute_1 = __importDefault(require("./Routes/AuthRoutes/loginRoute"));
 const RefreshTokenRoute_1 = __importDefault(require("./Routes/AuthRoutes/RefreshTokenRoute"));
 const googleAuthRoute_1 = __importDefault(require("./Routes/AuthRoutes/googleAuthRoute"));
 const LogoutRoute_1 = __importDefault(require("./Routes/AuthRoutes/LogoutRoute"));
@@ -48,6 +48,7 @@ const VerifyRoles_1 = __importDefault(require("./Middlewares/VerifyRoles"));
 const allowedRoles_1 = __importDefault(require("./config/allowedRoles"));
 const AdminRoutes_1 = __importDefault(require("./Routes/AdminRoutes/AdminRoutes"));
 const UserRoutes_1 = __importDefault(require("./Routes/UserRoutes/UserRoutes"));
+const propertyRoutes_1 = __importDefault(require("./Routes/PropertyRoutes/propertyRoutes"));
 const PORT = process.env.PORT || 3500;
 // connect to mongodb database
 (0, dbConnection_1.default)();
@@ -64,7 +65,7 @@ app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
 app.use("/register", RegisterRoute_1.default);
 app.use("/otp/", otpRoute_1.default);
-app.use("/auth", AuthRoute_1.default);
+app.use("/auth", loginRoute_1.default);
 app.use("/auth/google", googleAuthRoute_1.default);
 app.use("/refreshToken", RefreshTokenRoute_1.default);
 app.use("/logout", LogoutRoute_1.default);
@@ -72,6 +73,7 @@ app.use("/logout", LogoutRoute_1.default);
 app.use(JwtVerification_1.default);
 app.use("/admin/", (0, VerifyRoles_1.default)(allowedRoles_1.default.Admin), AdminRoutes_1.default);
 app.use("/user/", (0, VerifyRoles_1.default)(allowedRoles_1.default.User), UserRoutes_1.default);
+app.use("/property/", (0, VerifyRoles_1.default)(allowedRoles_1.default.User), propertyRoutes_1.default);
 // app.use("/user", verifyRoles(ROLES_LIST.User), userRouter);
 // 404 Error Middleware
 app.use("*", (req, res, next) => {

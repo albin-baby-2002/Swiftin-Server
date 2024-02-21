@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
 
-import User from "../Models/userModel";
-import { sendOtpEmail } from "../Helpers/userVerificationHelper";
+import User from "../../Models/userModel";
+import { sendOtpEmail } from "../../Helpers/userVerificationHelper";
 import { ZodError, z } from "zod";
 
 const userSchema = z.object({
@@ -45,7 +45,7 @@ export const newUserRegister = async (
 
       if (existingUser && !existingUser?.verified) {
         await sendOtpEmail(existingUser);
-         return res
+        return res
           .status(200)
           .json({ userId: existingUser._id, email: existingUser.email });
       }

@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
-import otpData from "../Models/otpDataModel";
-import User from "../Models/userModel";
+import otpData from "../../Models/otpDataModel";
+import User from "../../Models/userModel";
 import mongoose from "mongoose";
-import { sendOtpEmail } from "../Helpers/userVerificationHelper";
-import otpResendAttempts from "../Models/resendAttempts";
+import { sendOtpEmail } from "../../Helpers/userVerificationHelper";
+import otpResendAttempts from "../../Models/resendAttempts";
 
 export const verifyOtpHandler = async (
   req: Request,
