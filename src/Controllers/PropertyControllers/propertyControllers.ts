@@ -1,6 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 
 import { ZodError, z } from "zod";
+import { HotelAddress } from "../../Models/hotelAddressModel";
+
+import { HotelListing } from "../../Models/hotelLisitingModal";
 
 const HotelListingSchema = z.object({
   addressLine: z.string().min(3, " Min length For address is 3").max(20),
@@ -34,13 +37,25 @@ const HotelListingSchema = z.object({
   }, "Invalid Indian Pincode"),
 });
 
+type propertyListingData = z.infer<typeof HotelListingSchema>;
+
+export interface CustomRequest extends Request {
+  userInfo?: {
+    id: string;
+    username: string;
+    roles: number[];
+  };
+}
+
 export const listPropertyHandler = async (
-  req: Request,
+  req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const propertyListingData = req.body;
+
+    console.log("\t \t \t \t ", propertyListingData, "...listing ");
 
     const validationResult = HotelListingSchema.safeParse(propertyListingData);
 
@@ -70,6 +85,47 @@ export const listPropertyHandler = async (
         aboutHotel,
         rentPerNight,
       } = validationResult.data;
+
+      let userID = req.userInfo?.id;
+
+      if (!userID)
+        throw new Error("Failed to identify user from req.userInfo.Id");
+
+      let newListing = new HotelListing({
+        userID,
+        totalRooms,
+        maxGuestsPerRoom: maxGuests,
+        bedsPerRoom,
+        bathroomPerRoom,
+        amenities,
+        mainImage,
+        otherImages,
+        listingTitle,
+        roomType,
+        hotelLicenseUrl,
+        aboutHotel,
+        rentPerNight,
+      });
+
+      await newListing.save();
+
+      let hotelAddress = new HotelAddress({
+        listingID: newListing._id,
+        userID,
+        addressLine,
+        city,
+        district,
+        state,
+        pinCode,
+      });
+
+      await hotelAddress.save();
+      
+      newListing.address = hotelAddress._id;
+      
+      await newListing.save();
+
+      return res.status(201).json({ message: "new Listing created" });
     }
   } catch (err: any) {
     console.log(err);

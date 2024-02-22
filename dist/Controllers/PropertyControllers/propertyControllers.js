@@ -11,6 +11,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.listPropertyHandler = void 0;
 const zod_1 = require("zod");
+const hotelAddressModel_1 = require("../../Models/hotelAddressModel");
+const hotelLisitingModal_1 = require("../../Models/hotelLisitingModal");
 const HotelListingSchema = zod_1.z.object({
     addressLine: zod_1.z.string().min(3, " Min length For address is 3").max(20),
     city: zod_1.z.string().min(3, " Min length For city is 3").max(15),
@@ -39,8 +41,10 @@ const HotelListingSchema = zod_1.z.object({
     }, "Invalid Indian Pincode"),
 });
 const listPropertyHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const propertyListingData = req.body;
+        console.log("\t \t \t \t ", propertyListingData, "...listing ");
         const validationResult = HotelListingSchema.safeParse(propertyListingData);
         if (!validationResult.success) {
             const validationError = validationResult.error;
@@ -48,6 +52,38 @@ const listPropertyHandler = (req, res, next) => __awaiter(void 0, void 0, void 0
         }
         if (validationResult.success) {
             const { addressLine, district, city, state, pinCode, totalRooms, maxGuests, bedsPerRoom, bathroomPerRoom, amenities, mainImage, otherImages, listingTitle, roomType, hotelLicenseUrl, aboutHotel, rentPerNight, } = validationResult.data;
+            let userID = (_a = req.userInfo) === null || _a === void 0 ? void 0 : _a.id;
+            if (!userID)
+                throw new Error("Failed to identify user from req.userInfo.Id");
+            let newListing = new hotelLisitingModal_1.HotelListing({
+                userID,
+                totalRooms,
+                maxGuestsPerRoom: maxGuests,
+                bedsPerRoom,
+                bathroomPerRoom,
+                amenities,
+                mainImage,
+                otherImages,
+                listingTitle,
+                roomType,
+                hotelLicenseUrl,
+                aboutHotel,
+                rentPerNight,
+            });
+            yield newListing.save();
+            let hotelAddress = new hotelAddressModel_1.HotelAddress({
+                listingID: newListing._id,
+                userID,
+                addressLine,
+                city,
+                district,
+                state,
+                pinCode,
+            });
+            yield hotelAddress.save();
+            newListing.address = hotelAddress._id;
+            yield newListing.save();
+            return res.status(201).json({ message: "new Listing created" });
         }
     }
     catch (err) {

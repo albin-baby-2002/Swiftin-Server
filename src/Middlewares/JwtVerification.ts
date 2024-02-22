@@ -5,13 +5,14 @@ dotenv.config();
 
 import jwt, { JwtPayload } from "jsonwebtoken";
 
-export interface CustomRequest extends Request {
-  userInfo?: {
-    id: string;
-    username: string;
-    roles: number[];
-  };
-}
+ export interface CustomRequest extends Request {
+   userInfo?: {
+     id: string;
+     username: string;
+     roles: number[];
+   };
+ }
+ 
 
 interface UserInfo {
   id: string;
@@ -23,7 +24,7 @@ interface DecodedToken {
   UserInfo: UserInfo;
 }
 
-const verifyJWT = (req: CustomRequest, res: Response, next: NextFunction) => {
+export const verifyJWT = (req: CustomRequest, res: Response, next: NextFunction) => {
   console.log("JWT ENTERED");
 
   const authHeader = (req.headers.authorization ||
@@ -60,4 +61,3 @@ const verifyJWT = (req: CustomRequest, res: Response, next: NextFunction) => {
   }
 };
 
-export default verifyJWT;

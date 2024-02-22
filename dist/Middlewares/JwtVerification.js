@@ -26,6 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.verifyJWT = void 0;
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -57,4 +58,4 @@ const verifyJWT = (req, res, next) => {
         next(err);
     }
 };
-exports.default = verifyJWT;
+exports.verifyJWT = verifyJWT;

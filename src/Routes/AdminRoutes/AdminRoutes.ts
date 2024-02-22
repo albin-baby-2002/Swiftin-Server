@@ -1,5 +1,5 @@
 import express from "express";
-import { authController } from "../../Controllers/AuthControllers/loginController";
+
 import {
   addNewUserHandler,
   blockUserHandler,
@@ -8,6 +8,11 @@ import {
   getUserDataHandler,
   unBlockUserHandler,
 } from "../../Controllers/AdminControllers/userManagement";
+import {
+  approveListing,
+  disapproveListing,
+  getAllListings,
+} from "../../Controllers/AdminControllers/listingsManagement";
 
 const router = express.Router();
 
@@ -19,5 +24,9 @@ router.get("/user/:userID", getUserDataHandler);
 router.patch("/user/:userID", editUserHandler);
 router.patch("/user/block/:userID", blockUserHandler);
 router.patch("/user/unblock/:userID", unBlockUserHandler);
+
+router.get("/listings", getAllListings);
+router.patch("/listings/approve/:listingID", approveListing);
+router.patch("/listings/disapprove/:listingID",disapproveListing );
 
 export default router;

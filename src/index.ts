@@ -18,12 +18,13 @@ import loginRoute from "./Routes/AuthRoutes/loginRoute";
 import refreshTokenRoute from "./Routes/AuthRoutes/RefreshTokenRoute";
 import googleAuthRoute from "./Routes/AuthRoutes/googleAuthRoute";
 import logoutRoute from "./Routes/AuthRoutes/LogoutRoute";
-import verifyJWT from "./Middlewares/JwtVerification";
+
 import verifyRoles from "./Middlewares/VerifyRoles";
 import ROLES_LIST from "./config/allowedRoles";
 import adminRoutes from "./Routes/AdminRoutes/AdminRoutes";
 import userRoutes from "./Routes/UserRoutes/UserRoutes"
 import propertyRoutes from "./Routes/PropertyRoutes/propertyRoutes"
+import { verifyJWT } from "./Middlewares/JwtVerification";
 
 const PORT = process.env.PORT || 3500;
 
