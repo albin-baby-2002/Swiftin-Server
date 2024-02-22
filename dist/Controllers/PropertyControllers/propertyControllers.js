@@ -25,7 +25,7 @@ const HotelListingSchema = zod_1.z.object({
     amenities: zod_1.z.array(zod_1.z.string()),
     hotelLicenseUrl: zod_1.z.string().min(1),
     aboutHotel: zod_1.z.string().min(20),
-    listingTitle: zod_1.z.string().min(10).max(20),
+    listingTitle: zod_1.z.string().min(10).max(30),
     roomType: zod_1.z.string().min(3),
     rentPerNight: zod_1.z.number().min(1000),
     mainImage: zod_1.z.string().refine((value) => {

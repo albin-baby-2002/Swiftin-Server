@@ -71,9 +71,9 @@ app.use("/refreshToken", RefreshTokenRoute_1.default);
 app.use("/logout", LogoutRoute_1.default);
 // authenticate users using jwt for private routes
 app.use(JwtVerification_1.verifyJWT);
-app.use("/admin/", (0, VerifyRoles_1.default)(allowedRoles_1.default.Admin), AdminRoutes_1.default);
-app.use("/user/", (0, VerifyRoles_1.default)(allowedRoles_1.default.User), UserRoutes_1.default);
-app.use("/property/", (0, VerifyRoles_1.default)(allowedRoles_1.default.User), propertyRoutes_1.default);
+app.use("/admin", (0, VerifyRoles_1.default)(allowedRoles_1.default.Admin), AdminRoutes_1.default);
+app.use("/user", (0, VerifyRoles_1.default)(allowedRoles_1.default.User), UserRoutes_1.default);
+app.use("/property", (0, VerifyRoles_1.default)(allowedRoles_1.default.User), propertyRoutes_1.default);
 // app.use("/user", verifyRoles(ROLES_LIST.User), userRouter);
 // 404 Error Middleware
 app.use("*", (req, res, next) => {

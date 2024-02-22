@@ -5,7 +5,7 @@ import {
   getProfileInfo,
   profileImgChangeHandler,
 } from "../../Controllers/UserControllers/UserController";
-import { activateListing, deActivateListing, getAllHostListings } from "../../Controllers/UserControllers/listingsController";
+import { activateListing, deActivateListing, getAllHostListings, getSingleListingData } from "../../Controllers/UserControllers/listingsController";
 
 const router = express.Router();
 
@@ -14,6 +14,9 @@ router.route("/profile").get(getProfileInfo).patch(editProfileHandler);
 router.patch("/profileImg", profileImgChangeHandler);
 
 router.get("/listings", getAllHostListings);
+
+
+router.get("/listing/:listingID",getSingleListingData)
 
 router.patch("/listings/activate/:listingID",activateListing);
 router.patch("/listings/deactivate/:listingID",deActivateListing);

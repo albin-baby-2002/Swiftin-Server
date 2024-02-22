@@ -10,6 +10,7 @@ const router = express_1.default.Router();
 router.route("/profile").get(UserController_1.getProfileInfo).patch(UserController_1.editProfileHandler);
 router.patch("/profileImg", UserController_1.profileImgChangeHandler);
 router.get("/listings", listingsController_1.getAllHostListings);
+router.get("/listing/:listingID", listingsController_1.getSingleListingData);
 router.patch("/listings/activate/:listingID", listingsController_1.activateListing);
 router.patch("/listings/deactivate/:listingID", listingsController_1.deActivateListing);
 exports.default = router;

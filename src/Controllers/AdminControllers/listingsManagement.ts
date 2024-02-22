@@ -83,6 +83,7 @@ export const getAllListings = async (
           isActiveForReservation: 1,
           hostName: "$hostData.username",
           location: "$addressData.city",
+          buildingName: "$addressData.addressLine",
         },
       },
     ]);

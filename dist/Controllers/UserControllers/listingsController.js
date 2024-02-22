@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deActivateListing = exports.activateListing = exports.getAllHostListings = void 0;
+exports.getSingleListingData = exports.deActivateListing = exports.activateListing = exports.getAllHostListings = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const hotelLisitingModal_1 = require("../../Models/hotelLisitingModal");
 const getAllHostListings = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -74,10 +74,12 @@ const getAllHostListings = (req, res, next) => __awaiter(void 0, void 0, void 0,
                     mainImage: 1,
                     listingTitle: 1,
                     hotelLicenseUrl: 1,
+                    roomType: 1,
                     approvedForReservation: 1,
                     isActiveForReservation: 1,
                     hostName: "$hostData.username",
                     location: "$addressData.city",
+                    buildingName: "$addressData.addressLine",
                 },
             },
         ]);
@@ -109,12 +111,12 @@ const activateListing = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         }
         const listing = yield hotelLisitingModal_1.HotelListing.findOne({ _id: listingID, userID });
         if (!listing) {
-            return res.status(400).json({ message: "failed to identify the specific listing of the host" });
+            return res.status(400).json({
+                message: "failed to identify the specific listing of the host",
+            });
         }
         if (!(listing === null || listing === void 0 ? void 0 : listing.approvedForReservation)) {
-            return res
-                .status(400)
-                .json({
+            return res.status(400).json({
                 message: "Admin haven't approved your listing",
             });
         }
@@ -125,7 +127,9 @@ const activateListing = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         }
         listing.isActiveForReservation = true;
         yield listing.save();
-        return res.status(200).json({ message: ' listing activated for reservations successfully ' });
+        return res
+            .status(200)
+            .json({ message: " listing activated for reservations successfully " });
     }
     catch (err) {
         console.log(err);
@@ -146,9 +150,7 @@ const deActivateListing = (req, res, next) => __awaiter(void 0, void 0, void 0, 
         }
         const listing = yield hotelLisitingModal_1.HotelListing.findOne({ _id: listingID, userID });
         if (!listing) {
-            return res
-                .status(400)
-                .json({
+            return res.status(400).json({
                 message: "failed to identify the specific listing of the host",
             });
         }
@@ -174,3 +176,44 @@ const deActivateListing = (req, res, next) => __awaiter(void 0, void 0, void 0, 
     }
 });
 exports.deActivateListing = deActivateListing;
+const getSingleListingData = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _d;
+    try {
+        const userID = new mongoose_1.default.Types.ObjectId((_d = req.userInfo) === null || _d === void 0 ? void 0 : _d.id);
+        if (!userID) {
+            return res.status(400).json({ message: "failed to identify host " });
+        }
+        const listingID = new mongoose_1.default.Types.ObjectId(req.params.listingID);
+        if (!listingID) {
+            return res.status(400).json({ message: "failed to identify listing " });
+        }
+        let filterQuery = { userID, _id: listingID };
+        console.log(filterQuery);
+        const listing = yield hotelLisitingModal_1.HotelListing.aggregate([
+            {
+                $match: filterQuery,
+            },
+            {
+                $project: {
+                    userID: 1,
+                    totalRooms: 1,
+                    amenities: 1,
+                    maxGuestsPerRoom: 1,
+                    listingTitle: 1,
+                    bedsPerRoom: 1,
+                    bathroomPerRoom: 1,
+                    roomType: 1,
+                    aboutHotel: 1,
+                    rentPerNight: 1,
+                },
+            },
+        ]);
+        console.log(listing, "get single listing");
+        return res.status(200).json({ listing: listing[0] });
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+});
+exports.getSingleListingData = getSingleListingData;

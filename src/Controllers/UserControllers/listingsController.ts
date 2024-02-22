@@ -91,10 +91,12 @@ export const getAllHostListings = async (
           mainImage: 1,
           listingTitle: 1,
           hotelLicenseUrl: 1,
+          roomType: 1,
           approvedForReservation: 1,
           isActiveForReservation: 1,
           hostName: "$hostData.username",
           location: "$addressData.city",
+          buildingName: "$addressData.addressLine",
         },
       },
     ]);
@@ -136,42 +138,38 @@ export const activateListing = async (
     }
 
     const listing = await HotelListing.findOne({ _id: listingID, userID });
-    
-    if(!listing){
-        return res.status(400).json({ message: "failed to identify the specific listing of the host" });
-    }
-    
-    if(!listing?.approvedForReservation){
-        return res
-          .status(400)
-          .json({
-            message: "Admin haven't approved your listing",
-          });
-    }
-    
-    if(listing.isActiveForReservation){
-        
-         return res.status(400).json({
-           message: "the listing is already in active state",
-         });
-    }
-    
-    
-    listing.isActiveForReservation = true;
-    
-    await listing.save();
-    
-    
-    return res.status(200).json({message:' listing activated for reservations successfully '})
-    
 
+    if (!listing) {
+      return res.status(400).json({
+        message: "failed to identify the specific listing of the host",
+      });
+    }
+
+    if (!listing?.approvedForReservation) {
+      return res.status(400).json({
+        message: "Admin haven't approved your listing",
+      });
+    }
+
+    if (listing.isActiveForReservation) {
+      return res.status(400).json({
+        message: "the listing is already in active state",
+      });
+    }
+
+    listing.isActiveForReservation = true;
+
+    await listing.save();
+
+    return res
+      .status(200)
+      .json({ message: " listing activated for reservations successfully " });
   } catch (err: any) {
     console.log(err);
 
     next(err);
   }
 };
-
 
 export const deActivateListing = async (
   req: CustomRequest,
@@ -194,24 +192,23 @@ export const deActivateListing = async (
     const listing = await HotelListing.findOne({ _id: listingID, userID });
 
     if (!listing) {
-      return res
-        .status(400)
-        .json({
-          message: "failed to identify the specific listing of the host",
-        });
+      return res.status(400).json({
+        message: "failed to identify the specific listing of the host",
+      });
     }
 
     if (!listing?.approvedForReservation) {
       return res.status(400).json({
-        message: "Admin haven't approved your listing. You can't to manage this listing",
+        message:
+          "Admin haven't approved your listing. You can't to manage this listing",
       });
     }
-    
-     if (!listing.isActiveForReservation) {
-       return res.status(400).json({
-         message: "the listing is already not in active state",
-       });
-     }
+
+    if (!listing.isActiveForReservation) {
+      return res.status(400).json({
+        message: "the listing is already not in active state",
+      });
+    }
 
     listing.isActiveForReservation = false;
 
@@ -220,6 +217,58 @@ export const deActivateListing = async (
     return res
       .status(200)
       .json({ message: " listing activated for reservations successfully " });
+  } catch (err: any) {
+    console.log(err);
+
+    next(err);
+  }
+};
+
+export const getSingleListingData = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
+
+    if (!userID) {
+      return res.status(400).json({ message: "failed to identify host " });
+    }
+
+    const listingID = new mongoose.Types.ObjectId(req.params.listingID);
+
+    if (!listingID) {
+      return res.status(400).json({ message: "failed to identify listing " });
+    }
+
+    let filterQuery = { userID, _id: listingID };
+
+    console.log(filterQuery);
+
+    const listing = await HotelListing.aggregate([
+      {
+        $match: filterQuery,
+      },
+      {
+        $project: {
+          userID: 1,
+          totalRooms: 1,
+          amenities: 1,
+          maxGuestsPerRoom: 1,
+          listingTitle: 1,
+          bedsPerRoom: 1,
+          bathroomPerRoom: 1,
+          roomType: 1,
+          aboutHotel: 1,
+          rentPerNight: 1,
+        },
+      },
+    ]);
+
+    console.log(listing, "get single listing");
+
+    return res.status(200).json({ listing: listing[0] });
   } catch (err: any) {
     console.log(err);
 

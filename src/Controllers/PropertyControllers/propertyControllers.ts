@@ -17,7 +17,7 @@ const HotelListingSchema = z.object({
   amenities: z.array(z.string()),
   hotelLicenseUrl: z.string().min(1),
   aboutHotel: z.string().min(20),
-  listingTitle: z.string().min(10).max(20),
+  listingTitle: z.string().min(10).max(30),
   roomType: z.string().min(3),
   rentPerNight: z.number().min(1000),
 
@@ -120,9 +120,9 @@ export const listPropertyHandler = async (
       });
 
       await hotelAddress.save();
-      
+
       newListing.address = hotelAddress._id;
-      
+
       await newListing.save();
 
       return res.status(201).json({ message: "new Listing created" });

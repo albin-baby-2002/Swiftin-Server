@@ -70,6 +70,7 @@ const getAllListings = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
                     isActiveForReservation: 1,
                     hostName: "$hostData.username",
                     location: "$addressData.city",
+                    buildingName: "$addressData.addressLine",
                 },
             },
         ]);

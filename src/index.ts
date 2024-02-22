@@ -62,9 +62,9 @@ app.use("/logout", logoutRoute);
 
 app.use(verifyJWT);
 
-app.use("/admin/", verifyRoles(ROLES_LIST.Admin), adminRoutes);
-app.use("/user/", verifyRoles(ROLES_LIST.User), userRoutes );
-app.use("/property/",verifyRoles(ROLES_LIST.User),propertyRoutes)
+app.use("/admin", verifyRoles(ROLES_LIST.Admin), adminRoutes);
+app.use("/user", verifyRoles(ROLES_LIST.User), userRoutes );
+app.use("/property",verifyRoles(ROLES_LIST.User),propertyRoutes)
 
 // app.use("/user", verifyRoles(ROLES_LIST.User), userRouter);
 
