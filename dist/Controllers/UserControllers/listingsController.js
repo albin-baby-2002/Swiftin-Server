@@ -12,9 +12,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSingleListingData = exports.deActivateListing = exports.activateListing = exports.getAllHostListings = void 0;
+exports.editListingHandler = exports.getSingleListingData = exports.deActivateListing = exports.activateListing = exports.getAllHostListings = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const hotelLisitingModal_1 = require("../../Models/hotelLisitingModal");
+const zod_1 = require("zod");
+const EditListingSchema = zod_1.z.object({
+    totalRooms: zod_1.z.number().min(1),
+    maxGuestsPerRoom: zod_1.z.number().min(1),
+    bedsPerRoom: zod_1.z.number().min(1),
+    bathroomPerRoom: zod_1.z.number().min(1),
+    amenities: zod_1.z.array(zod_1.z.string()),
+    aboutHotel: zod_1.z.string().min(20),
+    listingTitle: zod_1.z.string().min(10).max(30),
+    roomType: zod_1.z.string().min(3),
+    rentPerNight: zod_1.z.number().min(1000),
+});
 const getAllHostListings = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -217,3 +229,52 @@ const getSingleListingData = (req, res, next) => __awaiter(void 0, void 0, void 
     }
 });
 exports.getSingleListingData = getSingleListingData;
+const editListingHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _e;
+    try {
+        const userID = new mongoose_1.default.Types.ObjectId((_e = req.userInfo) === null || _e === void 0 ? void 0 : _e.id);
+        if (!userID) {
+            return res.status(400).json({ message: "failed to identify host " });
+        }
+        const listingID = new mongoose_1.default.Types.ObjectId(req.params.listingID);
+        if (!listingID) {
+            return res.status(400).json({ message: "failed to identify listing " });
+        }
+        const propertyData = req.body;
+        console.log("\t \t \t \t ", propertyData, "...listing ");
+        const validationResult = EditListingSchema.safeParse(propertyData);
+        if (!validationResult.success) {
+            const validationError = validationResult.error;
+            res.status(400).json({ message: validationError.errors[0].message });
+        }
+        if (validationResult.success) {
+            const { totalRooms, bedsPerRoom, bathroomPerRoom, amenities, listingTitle, roomType, aboutHotel, rentPerNight, } = validationResult.data;
+            const listing = yield hotelLisitingModal_1.HotelListing.findOne({ _id: listingID, userID });
+            if (!listing) {
+                return res.status(400).json({
+                    message: "failed to identify the specific listing of the host",
+                });
+            }
+            const updatedListing = yield hotelLisitingModal_1.HotelListing.findByIdAndUpdate(listingID, {
+                totalRooms,
+                bedsPerRoom,
+                bathroomPerRoom,
+                amenities,
+                listingTitle,
+                roomType,
+                aboutHotel,
+                rentPerNight,
+            }, { new: true });
+            if (updatedListing)
+                return res
+                    .status(200)
+                    .json({ message: "successfully updated the listing" });
+            return res.send(500).json({ message: "failed to update the listing" });
+        }
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+});
+exports.editListingHandler = editListingHandler;
