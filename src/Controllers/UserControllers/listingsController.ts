@@ -3,6 +3,7 @@ import User from "../../Models/userModel";
 import mongoose from "mongoose";
 import { HotelListing } from "../../Models/hotelLisitingModal";
 import { ZodError, z } from "zod";
+import { HotelAddress } from "../../Models/hotelAddressModel";
 
 const EditListingSchema = z.object({
   totalRooms: z.number().min(1),
@@ -14,6 +15,29 @@ const EditListingSchema = z.object({
   listingTitle: z.string().min(10).max(30),
   roomType: z.string().min(3),
   rentPerNight: z.number().min(1000),
+});
+
+const EditListingImageSchema = z.object({
+  mainImage: z.string().refine((value) => {
+    return value;
+  }, "Main Img Is Compulsory"),
+
+  otherImages: z.array(z.string()).refine((values) => {
+    let pics = values.filter((val) => val.trim());
+
+    return pics.length >= 4;
+  }, "Needed Four Other Images"),
+});
+
+const EditListingAddressSchema = z.object({
+  addressLine: z.string().min(3, " Min length For address is 3").max(20),
+  city: z.string().min(3, " Min length For city is 3").max(15),
+  district: z.string().min(3, " Min length For district is 3").max(15),
+  state: z.string().min(3, " Min length is 3").max(15),
+  pinCode: z.string().refine((value) => {
+    const INDIAN_PINCODE_REGEX = /^[1-9][0-9]{5}$/;
+    return INDIAN_PINCODE_REGEX.test(value);
+  }, "Invalid Indian Pincode"),
 });
 
 interface GetHostListingsQuery {
@@ -275,6 +299,8 @@ export const getSingleListingData = async (
           roomType: 1,
           aboutHotel: 1,
           rentPerNight: 1,
+          mainImage: 1,
+          otherImages: 1,
         },
       },
     ]);
@@ -361,6 +387,194 @@ export const editListingHandler = async (
 
       return res.send(500).json({ message: "failed to update the listing" });
     }
+  } catch (err: any) {
+    console.log(err);
+
+    next(err);
+  }
+};
+
+export const editListingImagesHandler = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
+
+    if (!userID) {
+      return res.status(400).json({ message: "failed to identify host " });
+    }
+
+    const listingID = new mongoose.Types.ObjectId(req.params.listingID);
+
+    if (!listingID) {
+      return res.status(400).json({ message: "failed to identify listing " });
+    }
+
+    const imageData = req.body;
+
+    console.log("\t \t \t \t ", imageData, "...listing ");
+
+    const validationResult = EditListingImageSchema.safeParse(imageData);
+
+    if (!validationResult.success) {
+      const validationError: ZodError = validationResult.error;
+
+      res.status(400).json({ message: validationError.errors[0].message });
+    }
+
+    if (validationResult.success) {
+      const { mainImage, otherImages } = validationResult.data;
+
+      const listing = await HotelListing.findOne({ _id: listingID, userID });
+
+      if (!listing) {
+        return res.status(400).json({
+          message: "failed to identify the specific listing of the host",
+        });
+      }
+
+      const updatedListing = await HotelListing.findByIdAndUpdate(
+        listingID,
+        {
+          mainImage,
+          otherImages,
+        },
+        { new: true }
+      );
+
+      if (updatedListing)
+        return res
+          .status(200)
+          .json({ message: "successfully updated the images" });
+
+      return res.send(500).json({ message: "failed to update the listing" });
+    }
+  } catch (err: any) {
+    console.log(err);
+
+    next(err);
+  }
+};
+
+export const getListingAddress = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
+
+    if (!userID) {
+      return res.status(400).json({ message: "failed to identify host " });
+    }
+
+    const listingID = new mongoose.Types.ObjectId(req.params.listingID);
+
+    if (!listingID) {
+      return res.status(400).json({ message: "failed to identify listing " });
+    }
+
+    let filterQuery = { userID, _id: listingID };
+
+    console.log(filterQuery);
+
+    const listing = await HotelListing.aggregate([
+      {
+        $match: filterQuery,
+      },
+      {
+        $lookup: {
+          from: "hoteladdresses",
+          localField: "address",
+          foreignField: "_id",
+          as: "addressData",
+        },
+      },
+
+      {
+        $unwind: { path: "$addressData", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $project: {
+          addressLine: "$addressData.addressLine",
+          city: "$addressData.city",
+          district: "$addressData.district",
+          state: "$addressData.state",
+          pinCode: "$addressData.pinCode",
+        },
+      },
+    ]);
+
+    console.log(listing, "get single listing");
+
+    return res.status(200).json({  ...listing[0] });
+  } catch (err: any) {
+    console.log(err);
+
+    next(err);
+  }
+};
+
+
+export const editListingAddress = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
+
+    if (!userID) {
+      return res.status(400).json({ message: "failed to identify host " });
+    }
+
+    const listingID = new mongoose.Types.ObjectId(req.params.listingID);
+
+    if (!listingID) {
+      return res.status(400).json({ message: "failed to identify listing " });
+    }
+    
+      const listing = await HotelListing.findOne({ _id: listingID, userID });
+
+    if (!listing) {
+      return res.status(400).json({
+        message: "failed to identify the specific listing of the host",
+      });
+    }
+
+    const addressID = listing.address;
+    
+    const addressData = req.body;
+
+    console.log("\t \t \t \t ", addressData, "...listing ");
+
+    const validationResult = EditListingAddressSchema.safeParse(addressData);
+
+    if (!validationResult.success) {
+      const validationError: ZodError = validationResult.error;
+
+      res.status(400).json({ message: validationError.errors[0].message });
+    }
+
+    if (validationResult.success) {
+      const { addressLine,city,district,state,pinCode } = validationResult.data;
+      
+      
+      const updatedAddress = await HotelAddress.findByIdAndUpdate(addressID,{addressLine,city,district,state,pinCode},{new:true});
+      
+       if (updatedAddress)
+         return res
+           .status(200)
+           .json({ message: "successfully updated the address" });
+
+       return res.send(500).json({ message: "failed to update the address" });
+      
+    }
+    
+    
+    
   } catch (err: any) {
     console.log(err);
 
