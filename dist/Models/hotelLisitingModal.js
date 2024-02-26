@@ -80,5 +80,14 @@ const HotelListingSchema = new mongoose_1.default.Schema({
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: "HotelAddress",
     },
+    reservations: [
+        {
+            type: mongoose_1.default.Schema.Types.ObjectId,
+            ref: "HotelReservation",
+        },
+    ],
+    dateWiseReservationData: {
+        type: Object
+    }
 });
 exports.HotelListing = mongoose_1.default.model("HotelListing", HotelListingSchema);

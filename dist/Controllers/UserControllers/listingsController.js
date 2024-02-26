@@ -24,7 +24,7 @@ const EditListingSchema = zod_1.z.object({
     bathroomPerRoom: zod_1.z.number().min(1),
     amenities: zod_1.z.array(zod_1.z.string()),
     aboutHotel: zod_1.z.string().min(20),
-    listingTitle: zod_1.z.string().min(10).max(30),
+    listingTitle: zod_1.z.string().min(10).max(60),
     roomType: zod_1.z.string().min(3),
     rentPerNight: zod_1.z.number().min(1000),
 });

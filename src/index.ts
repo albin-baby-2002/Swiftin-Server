@@ -18,6 +18,8 @@ import loginRoute from "./Routes/AuthRoutes/loginRoute";
 import refreshTokenRoute from "./Routes/AuthRoutes/RefreshTokenRoute";
 import googleAuthRoute from "./Routes/AuthRoutes/googleAuthRoute";
 import logoutRoute from "./Routes/AuthRoutes/LogoutRoute";
+import SearchPageRoute from "./Routes/SearchPageRoute/SearchPageRoute"
+import listingDataRoute from "./Routes/ListingDataRoute/listingRoute"
 
 import verifyRoles from "./Middlewares/VerifyRoles";
 import ROLES_LIST from "./config/allowedRoles";
@@ -57,6 +59,8 @@ app.use("/auth", loginRoute);
 app.use("/auth/google", googleAuthRoute);
 app.use("/refreshToken", refreshTokenRoute);
 app.use("/logout", logoutRoute);
+app.use("/search",SearchPageRoute)
+app.use('/listing/',listingDataRoute)
 
 // authenticate users using jwt for private routes
 

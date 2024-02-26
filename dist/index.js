@@ -43,6 +43,8 @@ const loginRoute_1 = __importDefault(require("./Routes/AuthRoutes/loginRoute"));
 const RefreshTokenRoute_1 = __importDefault(require("./Routes/AuthRoutes/RefreshTokenRoute"));
 const googleAuthRoute_1 = __importDefault(require("./Routes/AuthRoutes/googleAuthRoute"));
 const LogoutRoute_1 = __importDefault(require("./Routes/AuthRoutes/LogoutRoute"));
+const SearchPageRoute_1 = __importDefault(require("./Routes/SearchPageRoute/SearchPageRoute"));
+const listingRoute_1 = __importDefault(require("./Routes/ListingDataRoute/listingRoute"));
 const VerifyRoles_1 = __importDefault(require("./Middlewares/VerifyRoles"));
 const allowedRoles_1 = __importDefault(require("./config/allowedRoles"));
 const AdminRoutes_1 = __importDefault(require("./Routes/AdminRoutes/AdminRoutes"));
@@ -69,6 +71,8 @@ app.use("/auth", loginRoute_1.default);
 app.use("/auth/google", googleAuthRoute_1.default);
 app.use("/refreshToken", RefreshTokenRoute_1.default);
 app.use("/logout", LogoutRoute_1.default);
+app.use("/search", SearchPageRoute_1.default);
+app.use('/listing/', listingRoute_1.default);
 // authenticate users using jwt for private routes
 app.use(JwtVerification_1.verifyJWT);
 app.use("/admin", (0, VerifyRoles_1.default)(allowedRoles_1.default.Admin), AdminRoutes_1.default);

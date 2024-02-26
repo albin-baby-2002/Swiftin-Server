@@ -12,7 +12,7 @@ const EditListingSchema = z.object({
   bathroomPerRoom: z.number().min(1),
   amenities: z.array(z.string()),
   aboutHotel: z.string().min(20),
-  listingTitle: z.string().min(10).max(30),
+  listingTitle: z.string().min(10).max(60),
   roomType: z.string().min(3),
   rentPerNight: z.number().min(1000),
 });
@@ -509,14 +509,13 @@ export const getListingAddress = async (
 
     console.log(listing, "get single listing");
 
-    return res.status(200).json({  ...listing[0] });
+    return res.status(200).json({ ...listing[0] });
   } catch (err: any) {
     console.log(err);
 
     next(err);
   }
 };
-
 
 export const editListingAddress = async (
   req: CustomRequest,
@@ -535,8 +534,8 @@ export const editListingAddress = async (
     if (!listingID) {
       return res.status(400).json({ message: "failed to identify listing " });
     }
-    
-      const listing = await HotelListing.findOne({ _id: listingID, userID });
+
+    const listing = await HotelListing.findOne({ _id: listingID, userID });
 
     if (!listing) {
       return res.status(400).json({
@@ -545,7 +544,7 @@ export const editListingAddress = async (
     }
 
     const addressID = listing.address;
-    
+
     const addressData = req.body;
 
     console.log("\t \t \t \t ", addressData, "...listing ");
@@ -559,22 +558,22 @@ export const editListingAddress = async (
     }
 
     if (validationResult.success) {
-      const { addressLine,city,district,state,pinCode } = validationResult.data;
-      
-      
-      const updatedAddress = await HotelAddress.findByIdAndUpdate(addressID,{addressLine,city,district,state,pinCode},{new:true});
-      
-       if (updatedAddress)
-         return res
-           .status(200)
-           .json({ message: "successfully updated the address" });
+      const { addressLine, city, district, state, pinCode } =
+        validationResult.data;
 
-       return res.send(500).json({ message: "failed to update the address" });
-      
+      const updatedAddress = await HotelAddress.findByIdAndUpdate(
+        addressID,
+        { addressLine, city, district, state, pinCode },
+        { new: true }
+      );
+
+      if (updatedAddress)
+        return res
+          .status(200)
+          .json({ message: "successfully updated the address" });
+
+      return res.send(500).json({ message: "failed to update the address" });
     }
-    
-    
-    
   } catch (err: any) {
     console.log(err);
 

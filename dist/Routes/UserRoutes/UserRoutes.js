@@ -6,17 +6,26 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const UserController_1 = require("../../Controllers/UserControllers/UserController");
 const listingsController_1 = require("../../Controllers/UserControllers/listingsController");
+const propertyControllers_1 = require("../../Controllers/PropertyControllers/propertyControllers");
 const router = express_1.default.Router();
+// get profile info of the user and edit it
 router.route("/profile").get(UserController_1.getProfileInfo).patch(UserController_1.editProfileHandler);
+// edit profile image of the user
 router.patch("/profileImg", UserController_1.profileImgChangeHandler);
+// listings hosted by user data
 router.get("/listings", listingsController_1.getAllHostListings);
-router.patch("/listing/images/:listingID", listingsController_1.editListingImagesHandler);
+router.post("/listing/reserve", propertyControllers_1.reservePropertyHandler);
+// activate and deactivate reservations for listing hosted by user
 router.patch("/listings/activate/:listingID", listingsController_1.activateListing);
 router.patch("/listings/deactivate/:listingID", listingsController_1.deActivateListing);
+// edit images of hosting listed by user
+router.patch("/listing/images/:listingID", listingsController_1.editListingImagesHandler);
+// get and modify address of listings hosted by user
 router
     .route("/listing/address/:listingID")
     .get(listingsController_1.getListingAddress)
     .patch(listingsController_1.editListingAddress);
+// get the data of single listing hosted by user and edit its general info
 router
     .route("/listing/:listingID")
     .get(listingsController_1.getSingleListingData)
