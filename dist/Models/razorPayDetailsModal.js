@@ -3,9 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HotelReservation = void 0;
+exports.RazorPayDetails = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
-const ReservationSchema = new mongoose_1.default.Schema({
+const RazorPayDetailSchema = new mongoose_1.default.Schema({
     userID: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: "User",
@@ -16,40 +16,30 @@ const ReservationSchema = new mongoose_1.default.Schema({
         ref: "HotelListing",
         required: true,
     },
-    checkInDate: {
-        type: Date,
-    },
-    checkOutDate: {
-        type: Date,
-    },
-    reservationFee: {
+    amountPaid: {
         type: Number,
         default: 0,
     },
-    rooms: {
-        type: Number,
-        default: 1,
-    },
-    dateOfTransaction: {
+    dateOfPaymentVerification: {
         type: Date,
         default: Date.now,
     },
-    paymentStatus: {
+    reservationID: {
         type: String,
-        enum: ["paid", "pending", "failed", "refunded", "cancelled"],
+        ref: "HotelReservation",
         required: true,
     },
-    reservationStatus: {
+    razorpayPaymentId: {
         type: String,
-        enum: ["paymentPending", "success", "cancelled"],
-        required: true,
+        required: true
     },
-    razorpayOrderID: {
+    razorpayOrderId: {
         type: String,
+        required: true
     },
-    razorPayDetailsID: {
+    razorpaySignature: {
         type: String,
-        ref: "RazorPayDetails",
+        required: true
     },
 });
-exports.HotelReservation = mongoose_1.default.model("HotelReservation", ReservationSchema);
+exports.RazorPayDetails = mongoose_1.default.model("RazorPayDetails", RazorPayDetailSchema);

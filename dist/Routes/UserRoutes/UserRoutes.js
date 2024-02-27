@@ -14,7 +14,9 @@ router.route("/profile").get(UserController_1.getProfileInfo).patch(UserControll
 router.patch("/profileImg", UserController_1.profileImgChangeHandler);
 // listings hosted by user data
 router.get("/listings", listingsController_1.getAllHostListings);
-router.post("/listing/reserve", propertyControllers_1.reservePropertyHandler);
+router.post("/listing/reserve/createOrder", propertyControllers_1.createReservationOrderHanlder);
+router.post("/listing/reserve/success", propertyControllers_1.validatePaymentAndCompleteReservation);
+router.post("/listing/checkAvailability", propertyControllers_1.checkAvailability);
 // activate and deactivate reservations for listing hosted by user
 router.patch("/listings/activate/:listingID", listingsController_1.activateListing);
 router.patch("/listings/deactivate/:listingID", listingsController_1.deActivateListing);

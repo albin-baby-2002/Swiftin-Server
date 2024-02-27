@@ -15,7 +15,7 @@ import {
   getListingAddress,
   getSingleListingData,
 } from "../../Controllers/UserControllers/listingsController";
-import { reservePropertyHandler } from "../../Controllers/PropertyControllers/propertyControllers";
+import { checkAvailability, createReservationOrderHanlder, validatePaymentAndCompleteReservation } from "../../Controllers/PropertyControllers/propertyControllers";
 
 const router = express.Router();
 
@@ -31,7 +31,10 @@ router.patch("/profileImg", profileImgChangeHandler);
 
 router.get("/listings", getAllHostListings);
 
-router.post("/listing/reserve", reservePropertyHandler);
+router.post("/listing/reserve/createOrder", createReservationOrderHanlder);
+router.post("/listing/reserve/success", validatePaymentAndCompleteReservation);
+
+router.post("/listing/checkAvailability", checkAvailability);
 
 // activate and deactivate reservations for listing hosted by user
 

@@ -12,24 +12,48 @@ const ReservationSchema = new mongoose.Schema({
     ref: "HotelListing",
     required: true,
   },
-  checkInDate:{
-    type:Date
+  checkInDate: {
+    type: Date,
   },
-  checkOutDate:{
-    type:Date
+  checkOutDate: {
+    type: Date,
   },
-  feePaid:{
-    type:Number,
-    default:0
+  reservationFee: {
+    type: Number,
+    default: 0,
   },
-  rooms:{
-    type:Number,
-    default:1
+  rooms: {
+    type: Number,
+    default: 1,
   },
-  paymentStatus:{
-    type:String,
-    default:'processing'
-  }
+
+  dateOfTransaction: {
+    type: Date,
+    default: Date.now,
+  },
+
+  paymentStatus: {
+    type: String,
+    enum: ["paid", "pending", "failed", "refunded", "cancelled"],
+    required: true,
+  },
+
+  reservationStatus: {
+    type: String,
+    enum: ["paymentPending", "success", "cancelled"],
+    required: true,
+  },
+
+  razorpayOrderID: {
+    type: String,
+  },
+  razorPayDetailsID: {
+    type: String,
+    ref: "RazorPayDetails",
+  },
 });
 
-export const HotelReservation = mongoose.model("HotelReservation", ReservationSchema);
+export const HotelReservation = mongoose.model(
+  "HotelReservation",
+  ReservationSchema
+);

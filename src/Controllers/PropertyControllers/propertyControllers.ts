@@ -6,6 +6,8 @@ import { HotelAddress } from "../../Models/hotelAddressModel";
 import { HotelListing } from "../../Models/hotelLisitingModal";
 import { HotelReservation } from "../../Models/reservationModal";
 import mongoose from "mongoose";
+import Razorpay from "razorpay";
+import { RazorPayDetails } from "../../Models/razorPayDetailsModal";
 
 const HotelListingSchema = z.object({
   addressLine: z.string().min(3, " Min length For address is 3").max(20),
@@ -136,12 +138,102 @@ export const listPropertyHandler = async (
   }
 };
 
-export const reservePropertyHandler = async (
+export const checkAvailability = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
+    const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
+
+    if (!userID) {
+      return res.status(400).json({ message: "failed to identify user " });
+    }
+
+    let { listingID, checkInDate, checkOutDate, rooms } = req.body;
+
+    listingID = new mongoose.Types.ObjectId(listingID);
+
+    if (!listingID || !checkInDate || !checkOutDate || !rooms) {
+      return res.status(400).json({
+        message: "Failed : all data fields are necessary . Try Again ",
+      });
+    }
+
+    let listingData = await HotelListing.findById(listingID);
+
+    if (!listingData)
+      return res.status(400).json({ message: "failed to identify listing " });
+
+    if (
+      !listingData.approvedForReservation ||
+      !listingData.isActiveForReservation
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Sorry the property is not available for listing " });
+    }
+
+    const startDate = new Date(checkInDate);
+    const endDate = new Date(checkOutDate);
+
+    let dateWiseReservation: { [key: string]: number } =
+      listingData.dateWiseReservationData || {};
+
+    for (
+      let date = new Date(startDate);
+      date < endDate;
+      date.setDate(date.getDate() + 1)
+    ) {
+      let dateString = new Date(date).toISOString().split("T")[0];
+
+      if (!dateWiseReservation.hasOwnProperty(dateString)) {
+        dateWiseReservation[dateString] = rooms;
+      } else {
+        let existingValue = dateWiseReservation[dateString];
+
+        if (existingValue + rooms > listingData.totalRooms) {
+          return res.status(400).json({
+            message:
+              "Unfortunately adequate rooms  not  available in given days",
+          });
+        }
+
+        dateWiseReservation[dateString] = existingValue + rooms;
+      }
+    }
+
+    return res
+      .status(200)
+      .json({ message: " Success: Rooms are available for the given days" });
+  } catch (err: any) {
+    console.log(err);
+
+    next(err);
+  }
+};
+
+export const createReservationOrderHanlder = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    console.log("instance");
+
+    let KEY_ID = await process.env.RAZORPAY_KEY_ID;
+    let KEY_SECRET = await process.env.RAZORPAY_KEY_SECRET;
+
+    console.log("instance", KEY_ID, KEY_SECRET);
+    if (!KEY_ID || !KEY_SECRET) {
+      return res.sendStatus(500);
+    }
+
+    const instance = await new Razorpay({
+      key_id: KEY_ID,
+      key_secret: KEY_SECRET,
+    });
+
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
@@ -205,6 +297,8 @@ export const reservePropertyHandler = async (
       numberOfDays++;
     }
 
+    console.log("instance after day");
+
     listingData.dateWiseReservationData = dateWiseReservation;
 
     const response = await HotelListing.findByIdAndUpdate(listingID, {
@@ -213,7 +307,7 @@ export const reservePropertyHandler = async (
 
     console.log(response);
 
-    const fee = listingData?.rentPerNight * numberOfDays * rooms;
+    const fee = (listingData?.rentPerNight * numberOfDays * rooms * 10) / 100;
 
     const reservationData = new HotelReservation({
       userID,
@@ -221,12 +315,156 @@ export const reservePropertyHandler = async (
       checkInDate,
       checkOutDate,
       rooms,
-      feePaid: fee,
+      reservationFee: fee,
+      paymentStatus: "pending",
+      reservationStatus: "paymentPending",
     });
 
     await reservationData.save();
 
-    return res.status(200).json({ message: "successfully made reservation" });
+    let reservationID = reservationData.id;
+
+    await HotelListing.findByIdAndUpdate(listingID, {
+      $push: { reservations: reservationID },
+    });
+
+    const amount = reservationData.reservationFee * 100;
+
+    const receipt = reservationData._id.toString();
+
+    const currency = "INR";
+
+    const options = {
+      amount: amount,
+      currency: currency,
+      receipt: receipt,
+    };
+
+    const order = await instance.orders.create(options);
+
+    if (!order) return res.status(500);
+
+    reservationData.razorpayOrderID = order.id;
+
+    await reservationData.save();
+
+    return res.status(200).json({
+      message: "successfully made reservation",
+      order,
+      reservationID: reservationData._id,
+    });
+  } catch (err: any) {
+    console.log(err);
+
+    next(err);
+  }
+};
+
+export const validatePaymentAndCompleteReservation = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    console.log("instance");
+
+    const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
+
+    if (!userID) {
+      return res.status(400).json({ message: "failed to identify host " });
+    }
+
+    let {
+      reservationID,
+      listingID,
+      amount,
+      orderCreationId,
+      razorpayPaymentId,
+      razorpayOrderId,
+      razorpaySignature,
+    } = req.body;
+
+    reservationID = new mongoose.Types.ObjectId(reservationID);
+
+    listingID = new mongoose.Types.ObjectId(listingID);
+
+    if (
+      !listingID ||
+      !reservationID ||
+      !amount ||
+      !orderCreationId ||
+      !razorpayPaymentId ||
+      !razorpayOrderId ||
+      !razorpaySignature
+    ) {
+      return res.status(400).json({
+        message: "Failed : all data fields are necessary . Try Again ",
+      });
+    }
+
+    let listingData = await HotelListing.findById(listingID);
+
+    if (!listingData)
+      return res.status(400).json({ message: "failed to identify listing " });
+
+    if (
+      !listingData.approvedForReservation ||
+      !listingData.isActiveForReservation
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Sorry the property is not available for listing " });
+    }
+
+    let reservationData = await HotelReservation.findById(reservationID);
+
+    if (!reservationData)
+      return res
+        .status(400)
+        .json({ message: "failed to find the reservation data " });
+
+    console.log(
+      new mongoose.Types.ObjectId(reservationData.listingID).equals(listingID),
+      "first"
+    );
+
+    console.log(reservationData.razorpayOrderID == orderCreationId, "second");
+
+    console.log(
+      reservationData.reservationFee * 100 == Number(amount),
+      "third"
+    );
+
+    if (
+      !new mongoose.Types.ObjectId(reservationData.listingID).equals(
+        listingID
+      ) ||
+      reservationData.razorpayOrderID !== orderCreationId ||
+      reservationData.reservationFee * 100 !== Number(amount)
+    ) {
+      return res
+        .status(400)
+        .json({ message: "failed to validate payment data inconsistency" });
+    }
+
+    const paymentDetails = new RazorPayDetails({
+      userID,
+      listingID,
+      reservationID,
+      amountPaid: amount,
+      razorpayPaymentId,
+      razorpayOrderId,
+      razorpaySignature,
+    });
+
+    await paymentDetails.save();
+
+    reservationData.paymentStatus = "paid";
+    reservationData.reservationStatus = "success";
+
+    await reservationData.save();
+
+    return res.status(200).json({ message: "payment verified successfully" });
   } catch (err: any) {
     console.log(err);
 
