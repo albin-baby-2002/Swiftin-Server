@@ -15,7 +15,14 @@ import {
   getListingAddress,
   getSingleListingData,
 } from "../../Controllers/UserControllers/listingsController";
-import { checkAvailability, createReservationOrderHanlder, validatePaymentAndCompleteReservation } from "../../Controllers/PropertyControllers/propertyControllers";
+import {
+  cancelReservationHandler,
+  checkAvailability,
+  createReservationOrderHanlder,
+  getAllListingsReservations,
+  getAllUserBookings,
+  validatePaymentAndCompleteReservation,
+} from "../../Controllers/PropertyControllers/propertyControllers";
 
 const router = express.Router();
 
@@ -58,5 +65,11 @@ router
   .route("/listing/:listingID")
   .get(getSingleListingData)
   .patch(editListingHandler);
+
+router.get("/bookings", getAllUserBookings);
+router.patch("/bookings/:reservationID", cancelReservationHandler);
+
+router.get("/reservations/received", getAllListingsReservations);
+
 
 export default router;

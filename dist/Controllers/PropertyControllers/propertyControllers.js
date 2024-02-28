@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validatePaymentAndCompleteReservation = exports.createReservationOrderHanlder = exports.checkAvailability = exports.listPropertyHandler = void 0;
+exports.getAllListingsReservations = exports.cancelReservationHandler = exports.getAllUserBookings = exports.validatePaymentAndCompleteReservation = exports.createReservationOrderHanlder = exports.checkAvailability = exports.listPropertyHandler = void 0;
 const zod_1 = require("zod");
 const hotelAddressModel_1 = require("../../Models/hotelAddressModel");
 const hotelLisitingModal_1 = require("../../Models/hotelLisitingModal");
@@ -20,6 +20,7 @@ const reservationModal_1 = require("../../Models/reservationModal");
 const mongoose_1 = __importDefault(require("mongoose"));
 const razorpay_1 = __importDefault(require("razorpay"));
 const razorPayDetailsModal_1 = require("../../Models/razorPayDetailsModal");
+const userModel_1 = __importDefault(require("../../Models/userModel"));
 const HotelListingSchema = zod_1.z.object({
     addressLine: zod_1.z.string().min(3, " Min length For address is 3").max(20),
     city: zod_1.z.string().min(3, " Min length For city is 3").max(15),
@@ -318,3 +319,217 @@ const validatePaymentAndCompleteReservation = (req, res, next) => __awaiter(void
     }
 });
 exports.validatePaymentAndCompleteReservation = validatePaymentAndCompleteReservation;
+const getAllUserBookings = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _e;
+    try {
+        console.log("instance");
+        const userID = new mongoose_1.default.Types.ObjectId((_e = req.userInfo) === null || _e === void 0 ? void 0 : _e.id);
+        if (!userID) {
+            return res.status(400).json({ message: "failed to identify user " });
+        }
+        const data = yield reservationModal_1.HotelReservation.aggregate([
+            {
+                $match: {
+                    userID: userID,
+                    reservationStatus: "success",
+                },
+            },
+            {
+                $lookup: {
+                    from: "hotellistings",
+                    localField: "listingID",
+                    foreignField: "_id",
+                    as: "listingData",
+                },
+            },
+            {
+                $unwind: { path: "$listingData", preserveNullAndEmptyArrays: true },
+            },
+            {
+                $project: {
+                    checkInDate: {
+                        $dateToString: {
+                            format: "%d-%m-%Y",
+                            date: "$checkInDate",
+                        },
+                    },
+                    checkOutDate: {
+                        $dateToString: {
+                            format: "%d-%m-%Y",
+                            date: "$checkOutDate",
+                        },
+                    },
+                    rooms: 1,
+                    maxGuests: "$listingData.maxGuestsPerRoom",
+                    image: "$listingData.mainImage",
+                    address: "$listingData.address",
+                },
+            },
+            {
+                $lookup: {
+                    from: "hoteladdresses",
+                    localField: "address",
+                    foreignField: "_id",
+                    as: "addressData",
+                },
+            },
+            {
+                $unwind: { path: "$addressData", preserveNullAndEmptyArrays: true },
+            },
+        ]);
+        console.log(data);
+        return res.status(200).json({ bookings: data });
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+});
+exports.getAllUserBookings = getAllUserBookings;
+const cancelReservationHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _f;
+    try {
+        console.log("instance");
+        const userID = new mongoose_1.default.Types.ObjectId((_f = req.userInfo) === null || _f === void 0 ? void 0 : _f.id);
+        if (!userID) {
+            return res.status(400).json({ message: "failed to identify user " });
+        }
+        const reservationID = new mongoose_1.default.Types.ObjectId(req.params.reservationID);
+        if (!reservationID) {
+            return res
+                .status(400)
+                .json({ message: "failed to identify reservation " });
+        }
+        const reservation = yield reservationModal_1.HotelReservation.findOne({
+            _id: reservationID,
+            userID,
+        });
+        if (!reservation) {
+            return res.status(400).json({
+                message: "failed to identify the specific reservation of user",
+            });
+        }
+        const listingID = reservation.listingID;
+        let listingData = yield hotelLisitingModal_1.HotelListing.findById(listingID);
+        if (!listingData)
+            return res.status(400).json({ message: "failed to identify listing " });
+        if (!reservation.checkInDate || !reservation.checkOutDate) {
+            return res
+                .status(400)
+                .json({ message: "failed to get reservationData " });
+        }
+        const startDate = new Date(reservation.checkInDate);
+        const endDate = new Date(reservation.checkOutDate);
+        let dateWiseReservation = listingData.dateWiseReservationData || {};
+        let roomsBooked = reservation.rooms;
+        for (let date = new Date(startDate); date < endDate; date.setDate(date.getDate() + 1)) {
+            let dateString = new Date(date).toISOString().split("T")[0];
+            if (dateWiseReservation.hasOwnProperty(dateString)) {
+                let existingValue = dateWiseReservation[dateString];
+                if (existingValue >= roomsBooked) {
+                    dateWiseReservation[dateString] = existingValue - roomsBooked;
+                }
+            }
+        }
+        const updatedListingData = yield hotelLisitingModal_1.HotelListing.findByIdAndUpdate(listingID, {
+            dateWiseReservationData: dateWiseReservation,
+        });
+        reservation.reservationStatus = "cancelled";
+        yield reservation.save();
+        yield userModel_1.default.findByIdAndUpdate(userID, {
+            $inc: { wallet: reservation.reservationFee },
+        });
+        reservation.paymentStatus = "refunded";
+        yield reservation.save();
+        return res
+            .status(200)
+            .json({ message: "reservation cancelled successFully" });
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+});
+exports.cancelReservationHandler = cancelReservationHandler;
+const getAllListingsReservations = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _g;
+    try {
+        const userID = new mongoose_1.default.Types.ObjectId((_g = req.userInfo) === null || _g === void 0 ? void 0 : _g.id);
+        if (!userID) {
+            return res.status(400).json({ message: "failed to identify host " });
+        }
+        let queryParams = req.query;
+        let search = "";
+        if (queryParams.search) {
+            search = queryParams.search.trim();
+        }
+        let page = 1;
+        if (Number(queryParams.page)) {
+            page = Number(queryParams.page);
+        }
+        let limit = 5;
+        let filterQuery = { hotelName: {}, userID };
+        filterQuery.hotelName = { $regex: search, $options: "i" };
+        const reservations = yield reservationModal_1.HotelReservation.aggregate([
+            {
+                $lookup: {
+                    from: "hotellistings",
+                    localField: "listingID",
+                    foreignField: "_id",
+                    as: "listingData",
+                },
+            },
+            {
+                $unwind: { path: "$listingData", preserveNullAndEmptyArrays: true },
+            },
+            {
+                $lookup: {
+                    from: "hoteladdresses",
+                    localField: "listingData.address",
+                    foreignField: "_id",
+                    as: "addressData",
+                },
+            },
+            {
+                $unwind: { path: "$addressData", preserveNullAndEmptyArrays: true },
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "userID",
+                    foreignField: "_id",
+                    as: "userData",
+                },
+            },
+            {
+                $unwind: { path: "$userData", preserveNullAndEmptyArrays: true },
+            },
+            {
+                $project: {
+                    checkInDate: 1,
+                    checkOutDate: 1,
+                    reservationFee: 1,
+                    rooms: 1,
+                    paymentStatus: 1,
+                    reservationStatus: 1,
+                    hostID: "$listingData.userID",
+                    image: "$listingData.mainImage",
+                    hotelName: "$addressData.addressLine",
+                    customerName: "$userData.username",
+                },
+            },
+            {
+                $skip: (page - 1) * limit,
+            },
+            {
+                $limit: limit,
+            },
+        ]);
+        console.log(reservations);
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+});
+exports.getAllListingsReservations = getAllListingsReservations;

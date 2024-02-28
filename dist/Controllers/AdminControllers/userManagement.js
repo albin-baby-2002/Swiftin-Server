@@ -67,6 +67,9 @@ const getAllUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
                 $match: filterQuery,
             },
             {
+                $sort: { joinedDate: -1 },
+            },
+            {
                 $skip: (page - 1) * limit,
             },
             {
@@ -90,7 +93,7 @@ const getAllUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         const totalUsersMatchQuery = yield userModel_1.default.aggregate([
             {
                 $match: filterQuery,
-            }
+            },
         ]);
         const totalUsers = totalUsersMatchQuery.length;
         const totalPages = Math.ceil(totalUsers / limit);

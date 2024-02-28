@@ -51,6 +51,7 @@ const AdminRoutes_1 = __importDefault(require("./Routes/AdminRoutes/AdminRoutes"
 const UserRoutes_1 = __importDefault(require("./Routes/UserRoutes/UserRoutes"));
 const propertyRoutes_1 = __importDefault(require("./Routes/PropertyRoutes/propertyRoutes"));
 const JwtVerification_1 = require("./Middlewares/JwtVerification");
+const checkIsUserBlocked_1 = require("./Middlewares/checkIsUserBlocked");
 const PORT = process.env.PORT || 3500;
 // connect to mongodb database
 (0, dbConnection_1.default)();
@@ -69,16 +70,18 @@ app.use("/register", RegisterRoute_1.default);
 app.use("/otp/", otpRoute_1.default);
 app.use("/auth", loginRoute_1.default);
 app.use("/auth/google", googleAuthRoute_1.default);
-app.use("/refreshToken", RefreshTokenRoute_1.default);
+app.use("/refreshToken", checkIsUserBlocked_1.checkIsUserBlocked, RefreshTokenRoute_1.default);
 app.use("/logout", LogoutRoute_1.default);
 app.use("/search", SearchPageRoute_1.default);
 app.use('/listing/', listingRoute_1.default);
 // authenticate users using jwt for private routes
 app.use(JwtVerification_1.verifyJWT);
 app.use("/admin", (0, VerifyRoles_1.default)(allowedRoles_1.default.Admin), AdminRoutes_1.default);
-app.use("/user", (0, VerifyRoles_1.default)(allowedRoles_1.default.User), UserRoutes_1.default);
+app.use("/user", checkIsUserBlocked_1.checkIsUserBlocked, (0, VerifyRoles_1.default)(allowedRoles_1.default.User), UserRoutes_1.default);
 app.use("/property", (0, VerifyRoles_1.default)(allowedRoles_1.default.User), propertyRoutes_1.default);
-// app.use("/user", verifyRoles(ROLES_LIST.User), userRouter);
+app.use((err, req, res, next) => {
+    return res.status(500).json({ message: 'server facing unexpected errors' });
+});
 // 404 Error Middleware
 app.use("*", (req, res, next) => {
     res.status(404).json({ error: "Not Found" });

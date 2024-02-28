@@ -34,12 +34,10 @@ export const loginController = async (
       if (!foundUser) return res.sendStatus(404); // 404 - User Not found
 
       if (!foundUser.password && foundUser.googleId) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "This Account don't have password only Google Login Available",
-          });
+        return res.status(400).json({
+          message:
+            "This Account don't have password only Google Login Available",
+        });
       }
 
       const match = await bcrypt.compare(password, foundUser.password);
@@ -48,12 +46,16 @@ export const loginController = async (
         if (!foundUser.verified) {
           console.log("email not verified");
 
-          return res
-            .status(400)
-            .json({
-              message:
-                "Email not verified. sign Up again and complete verification ",
-            });
+          return res.status(400).json({
+            message:
+              "Email not verified. sign Up again and complete verification ",
+          });
+        }
+
+        if (foundUser.blocked) {
+          return res.status(400).json({
+            message: "Your are blocked by admin ",
+          });
         }
 
         const roles = Object.values(foundUser.roles).filter(Boolean);

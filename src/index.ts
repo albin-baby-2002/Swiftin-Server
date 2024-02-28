@@ -27,6 +27,7 @@ import adminRoutes from "./Routes/AdminRoutes/AdminRoutes";
 import userRoutes from "./Routes/UserRoutes/UserRoutes"
 import propertyRoutes from "./Routes/PropertyRoutes/propertyRoutes"
 import { verifyJWT } from "./Middlewares/JwtVerification";
+import { checkIsUserBlocked } from "./Middlewares/checkIsUserBlocked";
 
 const PORT = process.env.PORT || 3500;
 
@@ -57,7 +58,7 @@ app.use("/register", registerRoute);
 app.use("/otp/", otpRoute);
 app.use("/auth", loginRoute);
 app.use("/auth/google", googleAuthRoute);
-app.use("/refreshToken", refreshTokenRoute);
+app.use("/refreshToken", checkIsUserBlocked, refreshTokenRoute);
 app.use("/logout", logoutRoute);
 app.use("/search",SearchPageRoute)
 app.use('/listing/',listingDataRoute)
@@ -67,10 +68,14 @@ app.use('/listing/',listingDataRoute)
 app.use(verifyJWT);
 
 app.use("/admin", verifyRoles(ROLES_LIST.Admin), adminRoutes);
-app.use("/user", verifyRoles(ROLES_LIST.User), userRoutes );
+app.use("/user",checkIsUserBlocked , verifyRoles(ROLES_LIST.User), userRoutes );
 app.use("/property",verifyRoles(ROLES_LIST.User),propertyRoutes)
 
-// app.use("/user", verifyRoles(ROLES_LIST.User), userRouter);
+
+app.use((err:any,req:Request,res:Response,next:NextFunction)=>{
+  
+   return  res.status(500).json({message:'server facing unexpected errors'})
+})
 
 // 404 Error Middleware
 

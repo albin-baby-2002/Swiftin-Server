@@ -65,7 +65,11 @@ const ListingData = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
                     otherImages: 1,
                     host: "$hostData.username",
                     hostImg: "$hostData.image",
-                    hotelName: "$addressData.addressLine"
+                    hotelName: "$addressData.addressLine",
+                    city: "$addressData.city",
+                    district: "$addressData.district",
+                    state: "$addressData.state",
+                    pinCode: "$addressData.pinCode",
                 },
             },
         ]);

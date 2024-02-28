@@ -39,7 +39,11 @@ export const hotelDataBySearch = async (
 
     let limit = 5;
 
-    let filterQuery = { listingTitle: {} };
+    let filterQuery = {
+      listingTitle: {},
+      approvedForReservation: true,
+      isActiveForReservation: true,
+    };
 
     filterQuery.listingTitle = { $regex: search, $options: "i" };
 

@@ -35,9 +35,7 @@ const loginController = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
             if (!foundUser)
                 return res.sendStatus(404); // 404 - User Not found
             if (!foundUser.password && foundUser.googleId) {
-                return res
-                    .status(400)
-                    .json({
+                return res.status(400).json({
                     message: "This Account don't have password only Google Login Available",
                 });
             }
@@ -45,10 +43,13 @@ const loginController = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
             if (match) {
                 if (!foundUser.verified) {
                     console.log("email not verified");
-                    return res
-                        .status(400)
-                        .json({
+                    return res.status(400).json({
                         message: "Email not verified. sign Up again and complete verification ",
+                    });
+                }
+                if (foundUser.blocked) {
+                    return res.status(400).json({
+                        message: "Your are blocked by admin ",
                     });
                 }
                 const roles = Object.values(foundUser.roles).filter(Boolean);

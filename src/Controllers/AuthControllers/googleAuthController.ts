@@ -40,6 +40,12 @@ const handleGoogleAuth = async (
       const { sub, name, email, picture } = userInfo;
 
       let user = await User.findOne({ email });
+      
+      if (user?.blocked) {
+        return res.status(400).json({
+          message: "Your are blocked by admin ",
+        });
+      }
 
       if (user && !user.googleId) {
         user.username = name;

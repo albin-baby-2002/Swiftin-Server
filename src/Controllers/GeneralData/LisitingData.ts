@@ -70,9 +70,13 @@ export const ListingData = async (
           rentPerNight: 1,
           mainImage: 1,
           otherImages: 1,
-          host:"$hostData.username",
-          hostImg:"$hostData.image",
-          hotelName:"$addressData.addressLine"
+          host: "$hostData.username",
+          hostImg: "$hostData.image",
+          hotelName: "$addressData.addressLine",
+          city: "$addressData.city",
+          district: "$addressData.district",
+          state: "$addressData.state",
+          pinCode: "$addressData.pinCode",
         },
       },
     ]);

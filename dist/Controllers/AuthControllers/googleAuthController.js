@@ -58,6 +58,11 @@ const handleGoogleAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, f
             console.log(userInfo);
             const { sub, name, email, picture } = userInfo;
             let user = yield userModel_1.default.findOne({ email });
+            if (user === null || user === void 0 ? void 0 : user.blocked) {
+                return res.status(400).json({
+                    message: "Your are blocked by admin ",
+                });
+            }
             if (user && !user.googleId) {
                 user.username = name;
                 user.googleId = sub;

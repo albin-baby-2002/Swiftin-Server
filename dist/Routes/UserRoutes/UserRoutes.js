@@ -32,4 +32,7 @@ router
     .route("/listing/:listingID")
     .get(listingsController_1.getSingleListingData)
     .patch(listingsController_1.editListingHandler);
+router.get("/bookings", propertyControllers_1.getAllUserBookings);
+router.patch("/bookings/:reservationID", propertyControllers_1.cancelReservationHandler);
+router.get("/reservations/received", propertyControllers_1.getAllListingsReservations);
 exports.default = router;

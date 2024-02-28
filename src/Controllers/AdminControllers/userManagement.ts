@@ -77,12 +77,17 @@ export const getAllUsers = async (
       {
         $match: filterQuery,
       },
+
+      {
+        $sort: { joinedDate: -1 },
+      },
       {
         $skip: (page - 1) * limit,
       },
       {
         $limit: limit,
       },
+
       {
         $project: {
           username: 1,
@@ -99,13 +104,13 @@ export const getAllUsers = async (
       },
     ]);
 
-    const totalUsersMatchQuery =   await User.aggregate([
+    const totalUsersMatchQuery = await User.aggregate([
       {
         $match: filterQuery,
-      }
+      },
     ]);
-    
-    const totalUsers  = totalUsersMatchQuery.length;
+
+    const totalUsers = totalUsersMatchQuery.length;
 
     const totalPages = Math.ceil(totalUsers / limit);
 

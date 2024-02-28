@@ -23,7 +23,11 @@ const hotelDataBySearch = (req, res, next) => __awaiter(void 0, void 0, void 0, 
             page = Number(queryParams.page);
         }
         let limit = 5;
-        let filterQuery = { listingTitle: {} };
+        let filterQuery = {
+            listingTitle: {},
+            approvedForReservation: true,
+            isActiveForReservation: true,
+        };
         filterQuery.listingTitle = { $regex: search, $options: "i" };
         const properties = yield hotelLisitingModal_1.HotelListing.aggregate([
             {
