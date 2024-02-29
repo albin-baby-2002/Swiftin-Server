@@ -5,14 +5,13 @@ dotenv.config();
 
 import jwt, { JwtPayload } from "jsonwebtoken";
 
- export interface CustomRequest extends Request {
-   userInfo?: {
-     id: string;
-     username: string;
-     roles: number[];
-   };
- }
- 
+export interface CustomRequest extends Request {
+  userInfo?: {
+    id: string;
+    username: string;
+    roles: number[];
+  };
+}
 
 interface UserInfo {
   id: string;
@@ -24,7 +23,11 @@ interface DecodedToken {
   UserInfo: UserInfo;
 }
 
-export const verifyJWT = (req: CustomRequest, res: Response, next: NextFunction) => {
+export const verifyJWT = (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
   console.log("JWT ENTERED");
 
   const authHeader = (req.headers.authorization ||
@@ -44,20 +47,23 @@ export const verifyJWT = (req: CustomRequest, res: Response, next: NextFunction)
     const token = authHeader.split(" ")[1];
 
     jwt.verify(token, ACCESS_SECRET, (err, decoded) => {
-      if (err) return res.sendStatus(403); // forbidden
+      if (err) {
+        console.log("failed to verify");
+        return res.sendStatus(403);
+      }
 
       req.userInfo = req.userInfo || { id: "", username: "", roles: [] };
 
       req.userInfo.id = (decoded as DecodedToken).UserInfo.id;
       req.userInfo.username = (decoded as DecodedToken).UserInfo.username;
       req.userInfo.roles = (decoded as DecodedToken).UserInfo.roles;
+
+      next();
+     
     });
 
-    next();
-
-    // console.log("jwt passed");
+ 
   } catch (err: any) {
     next(err);
   }
 };
-

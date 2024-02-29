@@ -21,6 +21,7 @@ import {
   createReservationOrderHanlder,
   getAllListingsReservations,
   getAllUserBookings,
+  hostCancelReservation,
   validatePaymentAndCompleteReservation,
 } from "../../Controllers/PropertyControllers/propertyControllers";
 
@@ -71,5 +72,5 @@ router.patch("/bookings/:reservationID", cancelReservationHandler);
 
 router.get("/reservations/received", getAllListingsReservations);
 
-
+router.patch("/reservations/received/cancel/:reservationID", hostCancelReservation );
 export default router;

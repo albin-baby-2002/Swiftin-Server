@@ -48,7 +48,7 @@ const EditListingAddressSchema = zod_1.z.object({
     }, "Invalid Indian Pincode"),
 });
 const getAllHostListings = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
         const userID = new mongoose_1.default.Types.ObjectId((_a = req.userInfo) === null || _a === void 0 ? void 0 : _a.id);
         if (!userID) {
@@ -125,15 +125,15 @@ const getAllHostListings = (req, res, next) => __awaiter(void 0, void 0, void 0,
         return res.status(200).json({ properties, totalPages });
     }
     catch (err) {
-        console.log(err);
+        console.log(err, (_b = req.userInfo) === null || _b === void 0 ? void 0 : _b.id);
         next(err);
     }
 });
 exports.getAllHostListings = getAllHostListings;
 const activateListing = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
+    var _c;
     try {
-        const userID = new mongoose_1.default.Types.ObjectId((_b = req.userInfo) === null || _b === void 0 ? void 0 : _b.id);
+        const userID = new mongoose_1.default.Types.ObjectId((_c = req.userInfo) === null || _c === void 0 ? void 0 : _c.id);
         if (!userID) {
             return res.status(400).json({ message: "failed to identify host " });
         }
@@ -170,9 +170,9 @@ const activateListing = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
 });
 exports.activateListing = activateListing;
 const deActivateListing = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c;
+    var _d;
     try {
-        const userID = new mongoose_1.default.Types.ObjectId((_c = req.userInfo) === null || _c === void 0 ? void 0 : _c.id);
+        const userID = new mongoose_1.default.Types.ObjectId((_d = req.userInfo) === null || _d === void 0 ? void 0 : _d.id);
         if (!userID) {
             return res.status(400).json({ message: "failed to identify host " });
         }
@@ -209,9 +209,9 @@ const deActivateListing = (req, res, next) => __awaiter(void 0, void 0, void 0, 
 });
 exports.deActivateListing = deActivateListing;
 const getSingleListingData = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d;
+    var _e;
     try {
-        const userID = new mongoose_1.default.Types.ObjectId((_d = req.userInfo) === null || _d === void 0 ? void 0 : _d.id);
+        const userID = new mongoose_1.default.Types.ObjectId((_e = req.userInfo) === null || _e === void 0 ? void 0 : _e.id);
         if (!userID) {
             return res.status(400).json({ message: "failed to identify host " });
         }
@@ -252,9 +252,9 @@ const getSingleListingData = (req, res, next) => __awaiter(void 0, void 0, void 
 });
 exports.getSingleListingData = getSingleListingData;
 const editListingHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e;
+    var _f;
     try {
-        const userID = new mongoose_1.default.Types.ObjectId((_e = req.userInfo) === null || _e === void 0 ? void 0 : _e.id);
+        const userID = new mongoose_1.default.Types.ObjectId((_f = req.userInfo) === null || _f === void 0 ? void 0 : _f.id);
         if (!userID) {
             return res.status(400).json({ message: "failed to identify host " });
         }
@@ -301,9 +301,9 @@ const editListingHandler = (req, res, next) => __awaiter(void 0, void 0, void 0,
 });
 exports.editListingHandler = editListingHandler;
 const editListingImagesHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _f;
+    var _g;
     try {
-        const userID = new mongoose_1.default.Types.ObjectId((_f = req.userInfo) === null || _f === void 0 ? void 0 : _f.id);
+        const userID = new mongoose_1.default.Types.ObjectId((_g = req.userInfo) === null || _g === void 0 ? void 0 : _g.id);
         if (!userID) {
             return res.status(400).json({ message: "failed to identify host " });
         }
@@ -344,9 +344,9 @@ const editListingImagesHandler = (req, res, next) => __awaiter(void 0, void 0, v
 });
 exports.editListingImagesHandler = editListingImagesHandler;
 const getListingAddress = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _g;
+    var _h;
     try {
-        const userID = new mongoose_1.default.Types.ObjectId((_g = req.userInfo) === null || _g === void 0 ? void 0 : _g.id);
+        const userID = new mongoose_1.default.Types.ObjectId((_h = req.userInfo) === null || _h === void 0 ? void 0 : _h.id);
         if (!userID) {
             return res.status(400).json({ message: "failed to identify host " });
         }
@@ -391,9 +391,9 @@ const getListingAddress = (req, res, next) => __awaiter(void 0, void 0, void 0, 
 });
 exports.getListingAddress = getListingAddress;
 const editListingAddress = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _h;
+    var _j;
     try {
-        const userID = new mongoose_1.default.Types.ObjectId((_h = req.userInfo) === null || _h === void 0 ? void 0 : _h.id);
+        const userID = new mongoose_1.default.Types.ObjectId((_j = req.userInfo) === null || _j === void 0 ? void 0 : _j.id);
         if (!userID) {
             return res.status(400).json({ message: "failed to identify host " });
         }

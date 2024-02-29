@@ -44,15 +44,16 @@ const verifyJWT = (req, res, next) => {
         }
         const token = authHeader.split(" ")[1];
         jsonwebtoken_1.default.verify(token, ACCESS_SECRET, (err, decoded) => {
-            if (err)
-                return res.sendStatus(403); // forbidden
+            if (err) {
+                console.log("failed to verify");
+                return res.sendStatus(403);
+            }
             req.userInfo = req.userInfo || { id: "", username: "", roles: [] };
             req.userInfo.id = decoded.UserInfo.id;
             req.userInfo.username = decoded.UserInfo.username;
             req.userInfo.roles = decoded.UserInfo.roles;
+            next();
         });
-        next();
-        // console.log("jwt passed");
     }
     catch (err) {
         next(err);

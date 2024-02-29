@@ -678,7 +678,11 @@ export const getAllListingsReservations = async (
 
     let limit = 5;
 
-    let filterQuery = { hotelName: {}, userID };
+    let filterQuery = {
+      hotelName: {},
+
+      hostID: userID,
+    };
 
     filterQuery.hotelName = { $regex: search, $options: "i" };
 
@@ -724,8 +728,19 @@ export const getAllListingsReservations = async (
 
       {
         $project: {
-          checkInDate: 1,
-          checkOutDate: 1,
+          checkInDate: {
+            $dateToString: {
+              format: "%d-%m-%Y",
+              date: "$checkInDate",
+            },
+          },
+          checkOutDate: {
+            $dateToString: {
+              format: "%d-%m-%Y",
+              date: "$checkOutDate",
+            },
+          },
+
           reservationFee: 1,
           rooms: 1,
           paymentStatus: 1,
@@ -737,6 +752,9 @@ export const getAllListingsReservations = async (
         },
       },
       {
+        $match: filterQuery,
+      },
+      {
         $skip: (page - 1) * limit,
       },
       {
@@ -744,7 +762,181 @@ export const getAllListingsReservations = async (
       },
     ]);
 
-    console.log(reservations);
+    const totalReservations = await HotelReservation.aggregate([
+      {
+        $lookup: {
+          from: "hotellistings",
+          localField: "listingID",
+          foreignField: "_id",
+          as: "listingData",
+        },
+      },
+
+      {
+        $unwind: { path: "$listingData", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $lookup: {
+          from: "hoteladdresses",
+          localField: "listingData.address",
+          foreignField: "_id",
+          as: "addressData",
+        },
+      },
+
+      {
+        $unwind: { path: "$addressData", preserveNullAndEmptyArrays: true },
+      },
+
+      {
+        $project: {
+          hostID: "$listingData.userID",
+          hotelName: "$addressData.addressLine",
+        },
+      },
+      {
+        $match: filterQuery,
+      },
+    ]);
+
+    console.log(totalReservations);
+
+    const totalPages = Math.ceil(totalReservations.length / limit);
+
+    return res.status(200).json({ reservations, totalPages });
+  } catch (err: any) {
+    console.log(err);
+
+    next(err);
+  }
+};
+
+export const hostCancelReservation = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    console.log("instance");
+
+    const hostID = new mongoose.Types.ObjectId(req.userInfo?.id);
+
+    if (!hostID) {
+      return res.status(400).json({ message: "failed to identify user " });
+    }
+
+    const reservationID = new mongoose.Types.ObjectId(req.params.reservationID);
+
+    if (!reservationID) {
+      return res
+        .status(400)
+        .json({ message: "failed to identify reservation " });
+    }
+
+    type TreservationData = {
+      userID: string;
+      listingID: string;
+      hostID: string;
+      hotelName: string;
+      checkInDate: string;
+      checkOutDate: string;
+      rooms: number;
+      reservationFee: number;
+    };
+
+    let reservationData: TreservationData[] = await HotelReservation.aggregate([
+      {
+        $lookup: {
+          from: "hotellistings",
+          localField: "listingID",
+          foreignField: "_id",
+          as: "listingData",
+        },
+      },
+
+      {
+        $unwind: { path: "$listingData", preserveNullAndEmptyArrays: true },
+      },
+
+      {
+        $project: {
+          userID: 1,
+          listingID: 1,
+          checkInDate: 1,
+          checkOutDate: 1,
+          rooms: 1,
+          reservationFee: 1,
+          hostID: "$listingData.userID",
+          hotelName: "$addressData.addressLine",
+        },
+      },
+      {
+        $match: { hostID, _id: reservationID },
+      },
+    ]);
+
+    if (!reservationData) {
+      return res.status(400).json({
+        message: "failed to identify the specific reservation of user",
+      });
+    }
+
+    let reservation = reservationData[0];
+    console.log(reservationData);
+
+    const listingID = reservation.listingID;
+
+    let listingData = await HotelListing.findById(listingID);
+
+    if (!listingData)
+      return res.status(400).json({ message: "failed to identify listing " });
+
+    if (!reservation.checkInDate || !reservation.checkOutDate) {
+      return res
+        .status(400)
+        .json({ message: "failed to get reservationData " });
+    }
+
+    const startDate = new Date(reservation.checkInDate);
+    const endDate = new Date(reservation.checkOutDate);
+
+    let dateWiseReservation: { [key: string]: number } =
+      listingData.dateWiseReservationData || {};
+
+    let roomsBooked = reservation.rooms;
+
+    for (
+      let date = new Date(startDate);
+      date < endDate;
+      date.setDate(date.getDate() + 1)
+    ) {
+      let dateString = new Date(date).toISOString().split("T")[0];
+
+      if (dateWiseReservation.hasOwnProperty(dateString)) {
+        let existingValue = dateWiseReservation[dateString];
+
+        if (existingValue >= roomsBooked) {
+          dateWiseReservation[dateString] = existingValue - roomsBooked;
+        }
+      }
+    }
+
+    const updatedListingData = await HotelListing.findByIdAndUpdate(listingID, {
+      dateWiseReservationData: dateWiseReservation,
+    });
+
+    await UserModel.findByIdAndUpdate(reservation.userID, {
+      $inc: { wallet: reservation.reservationFee },
+    });
+
+    let updatedReservation = await HotelReservation.findByIdAndUpdate(
+      reservationID,
+      { reservationStatus: "cancelled", paymentStatus: "refuned" }
+    );
+
+    return res
+      .status(200)
+      .json({ message: "reservation cancelled successFully" });
   } catch (err: any) {
     console.log(err);
 

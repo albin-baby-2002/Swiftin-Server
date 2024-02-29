@@ -35,4 +35,5 @@ router
 router.get("/bookings", propertyControllers_1.getAllUserBookings);
 router.patch("/bookings/:reservationID", propertyControllers_1.cancelReservationHandler);
 router.get("/reservations/received", propertyControllers_1.getAllListingsReservations);
+router.patch("/reservations/received/cancel/:reservationID", propertyControllers_1.hostCancelReservation);
 exports.default = router;

@@ -150,7 +150,7 @@ export const getAllHostListings = async (
 
     return res.status(200).json({ properties, totalPages });
   } catch (err: any) {
-    console.log(err);
+    console.log(err, req.userInfo?.id);
 
     next(err);
   }
