@@ -58,6 +58,12 @@ const userSchema = new mongoose_1.default.Schema({
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: "PersonalAddress",
     },
+    wishlist: [
+        {
+            type: mongoose_1.default.Schema.Types.ObjectId,
+            ref: "HotelListings",
+        },
+    ],
 });
 const UserModel = mongoose_1.default.model("User", userSchema);
 exports.default = UserModel;

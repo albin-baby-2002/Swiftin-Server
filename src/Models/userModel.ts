@@ -21,6 +21,7 @@ interface User extends mongoose.Document {
   wallet: number;
   aboutYou: string;
   address: mongoose.Schema.Types.ObjectId;
+  wishlist: mongoose.Schema.Types.ObjectId[];
 }
 
 const userSchema = new mongoose.Schema<User>({
@@ -77,6 +78,12 @@ const userSchema = new mongoose.Schema<User>({
     type: mongoose.Schema.Types.ObjectId,
     ref: "PersonalAddress",
   },
+  wishlist: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "HotelListings",
+    },
+  ],
 });
 
 const UserModel = mongoose.model("User", userSchema);

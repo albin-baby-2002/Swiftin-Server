@@ -7,6 +7,9 @@ import { z } from "zod";
 interface SearchQuery {
   search: string;
   page: number;
+  rooms: number;
+  guests: number;
+  sortBy: "highToLow" | "lowToHigh";
 }
 
 interface CustomRequest extends Request {
@@ -28,6 +31,7 @@ export const hotelDataBySearch = async (
     let search = "";
 
     if (queryParams.search) {
+      console.log("yes");
       search = queryParams.search.trim();
     }
 
@@ -37,26 +41,47 @@ export const hotelDataBySearch = async (
       page = Number(queryParams.page);
     }
 
+    let rooms = 1;
+
+    if (Number(queryParams.rooms)) {
+      rooms = Number(queryParams.rooms);
+    }
+
+    let guests = 1;
+
+    if (Number(queryParams.guests)) {
+      guests = Number(queryParams.guests);
+    }
+
+    let sortBy: -1 | 1 = -1;
+
+    if (queryParams.sortBy) {
+      let sort = queryParams.sortBy.trim();
+
+      if (sort === "highToLow") {
+        sortBy = -1;
+      } else {
+        sortBy = 1;
+      }
+    }
+
     let limit = 5;
 
+    console.log(search, "search");
+
     let filterQuery = {
-      listingTitle: {},
+      $or: [
+        { state: { $regex: search, $options: "i" } },
+        { district: { $regex: search, $options: "i" } },
+        { city: { $regex: search, $options: "i" } },
+      ],
+      totalRooms: { $gte: rooms },
+      maxGuestsPerRoom: { $gte: guests },
       approvedForReservation: true,
       isActiveForReservation: true,
     };
 
-    filterQuery.listingTitle = { $regex: search, $options: "i" };
-
     const properties = await HotelListing.aggregate([
-      {
-        $match: filterQuery,
-      },
-      {
-        $skip: (page - 1) * limit,
-      },
-      {
-        $limit: limit,
-      },
       {
         $lookup: {
           from: "hoteladdresses",
@@ -88,18 +113,59 @@ export const hotelDataBySearch = async (
           amenities: 1,
           mainImage: 1,
           listingTitle: 1,
+          maxGuestsPerRoom: 1,
           roomType: 1,
           approvedForReservation: 1,
           isActiveForReservation: 1,
           rentPerNight: 1,
           hostName: "$hostData.username",
+          city: "$addressData.city",
+          district: "$addressData.district",
+          state: "$addressData.state",
           location: "$addressData.city",
           buildingName: "$addressData.addressLine",
         },
       },
+      {
+        $match: filterQuery,
+      },
+
+      {
+        $skip: (page - 1) * limit,
+      },
+      {
+        $limit: limit,
+      },
+      {
+        $sort: { rentPerNight: sortBy },
+      },
     ]);
 
     const totalPropertiesMatchingQuery = await HotelListing.aggregate([
+      {
+        $lookup: {
+          from: "hoteladdresses",
+          localField: "address",
+          foreignField: "_id",
+          as: "addressData",
+        },
+      },
+
+      {
+        $unwind: { path: "$addressData", preserveNullAndEmptyArrays: true },
+      },
+
+      {
+        $project: {
+          totalRooms: 1,
+          maxGuestsPerRoom: 1,
+          approvedForReservation: 1,
+          isActiveForReservation: 1,
+          city: "$addressData.city",
+          district: "$addressData.district",
+          state: "$addressData.state",
+        },
+      },
       {
         $match: filterQuery,
       },
@@ -109,7 +175,7 @@ export const hotelDataBySearch = async (
 
     const totalPages = Math.ceil(totalProperties / limit);
 
-    return res.status(200).json({ properties, totalPages });
+    return res.status(200).json({ properties, totalPages, totalHotels:totalProperties });
   } catch (err: any) {
     console.log(err);
 

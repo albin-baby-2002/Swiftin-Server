@@ -16,12 +16,16 @@ import {
   getSingleListingData,
 } from "../../Controllers/UserControllers/listingsController";
 import {
+  AddToWishlist,
   cancelReservationHandler,
   checkAvailability,
+  createReservationOrderHandler,
   createReservationOrderHanlder,
   getAllListingsReservations,
   getAllUserBookings,
+  getWishlistData,
   hostCancelReservation,
+  removeFromWishlist,
   validatePaymentAndCompleteReservation,
 } from "../../Controllers/PropertyControllers/propertyControllers";
 
@@ -39,7 +43,7 @@ router.patch("/profileImg", profileImgChangeHandler);
 
 router.get("/listings", getAllHostListings);
 
-router.post("/listing/reserve/createOrder", createReservationOrderHanlder);
+router.post("/listing/reserve/createOrder", createReservationOrderHandler);
 router.post("/listing/reserve/success", validatePaymentAndCompleteReservation);
 
 router.post("/listing/checkAvailability", checkAvailability);
@@ -48,6 +52,10 @@ router.post("/listing/checkAvailability", checkAvailability);
 
 router.patch("/listings/activate/:listingID", activateListing);
 router.patch("/listings/deactivate/:listingID", deActivateListing);
+
+router.get("/listing/wishlist/", getWishlistData);
+router.patch("/listing/wishlist/add/:listingID", AddToWishlist);
+router.patch("/listing/wishlist/remove/:listingID", removeFromWishlist);
 
 // edit images of hosting listed by user
 
@@ -72,5 +80,8 @@ router.patch("/bookings/:reservationID", cancelReservationHandler);
 
 router.get("/reservations/received", getAllListingsReservations);
 
-router.patch("/reservations/received/cancel/:reservationID", hostCancelReservation );
+router.patch(
+  "/reservations/received/cancel/:reservationID",
+  hostCancelReservation
+);
 export default router;

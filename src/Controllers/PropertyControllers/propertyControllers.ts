@@ -220,7 +220,7 @@ export const checkAvailability = async (
   }
 };
 
-export const createReservationOrderHanlder = async (
+export const createReservationOrderHandler = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
@@ -877,12 +877,12 @@ export const hostCancelReservation = async (
 
     if (!reservationData) {
       return res.status(400).json({
-        message: "failed to identify the specific reservation of user",
+        message: "failed to identify the specific reservation ",
       });
     }
 
     let reservation = reservationData[0];
-    console.log(reservationData);
+    // console.log(reservationData);
 
     const listingID = reservation.listingID;
 
@@ -921,22 +921,179 @@ export const hostCancelReservation = async (
       }
     }
 
-    const updatedListingData = await HotelListing.findByIdAndUpdate(listingID, {
-      dateWiseReservationData: dateWiseReservation,
-    });
+    console.log(dateWiseReservation, "after \t \t");
 
-    await UserModel.findByIdAndUpdate(reservation.userID, {
-      $inc: { wallet: reservation.reservationFee },
-    });
+    const updatedListingData = await HotelListing.findByIdAndUpdate(
+      listingID,
+      {
+        dateWiseReservationData: dateWiseReservation,
+      },
+      { new: true }
+    );
+
+    console.log(updatedListingData, "updated listing \t \t");
+
+    const updatedUserData = await UserModel.findByIdAndUpdate(
+      reservation.userID,
+      {
+        $inc: { wallet: reservation.reservationFee },
+      },
+      { new: true }
+    );
+
+    console.log(updatedUserData, "updated listing \t \t");
 
     let updatedReservation = await HotelReservation.findByIdAndUpdate(
       reservationID,
-      { reservationStatus: "cancelled", paymentStatus: "refuned" }
+      { reservationStatus: "cancelled", paymentStatus: "refunded" },
+      { new: true }
     );
+    console.log(updatedReservation, "updated listing \t \t");
 
     return res
       .status(200)
       .json({ message: "reservation cancelled successFully" });
+  } catch (err: any) {
+    console.log(err);
+
+    next(err);
+  }
+};
+
+export const getWishlistData = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
+
+    if (!userID) {
+      return res.status(400).json({ message: "failed to identify user " });
+    }
+
+    const userData = await UserModel.findById(userID);
+
+    return res.status(200).json({
+      wishlist: userData?.wishlist,
+    });
+  } catch (err: any) {
+    console.log(err);
+
+    next(err);
+  }
+};
+
+// add to wishlist
+
+export const AddToWishlist = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
+
+    if (!userID) {
+      return res.status(400).json({ message: "failed to identify user " });
+    }
+
+    let listingID = new mongoose.Types.ObjectId(req.params.listingID);
+
+    const userData = await UserModel.findById(userID);
+
+    if (!listingID) {
+      return res.status(400).json({
+        message: "Failed to identify  the listingID. Try Again ",
+      });
+    }
+
+    let listingData = await HotelListing.findById(listingID);
+
+    if (!listingData)
+      return res.status(400).json({ message: "failed to identify listing " });
+
+    if (
+      !listingData.approvedForReservation ||
+      !listingData.isActiveForReservation
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Sorry the property is not available now " });
+    }
+
+    if (
+      userData?.wishlist.includes(
+        listingID as unknown as mongoose.Schema.Types.ObjectId
+      )
+    )
+      return res
+        .status(400)
+        .json({ message: "Hotel already exist in wishlist" });
+
+    const updatedUser = await UserModel.findByIdAndUpdate(userID, {
+      $push: {
+        wishlist: listingID,
+      },
+    });
+
+    return res.status(200).json({
+      message: "successfully added to wishlist",
+    });
+  } catch (err: any) {
+    console.log(err);
+
+    next(err);
+  }
+};
+
+// remove from wishlist
+
+export const removeFromWishlist = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
+
+    if (!userID) {
+      return res.status(400).json({ message: "failed to identify user " });
+    }
+
+    let listingID = new mongoose.Types.ObjectId(req.params.listingID);
+
+    const userData = await UserModel.findById(userID);
+
+    if (!listingID) {
+      return res.status(400).json({
+        message: "Failed to identify  the listingID. Try Again ",
+      });
+    }
+
+    let listingData = await HotelListing.findById(listingID);
+
+    if (!listingData)
+      return res.status(400).json({ message: "failed to identify listing " });
+
+    if (
+      !userData?.wishlist.includes(
+        listingID as unknown as mongoose.Schema.Types.ObjectId
+      )
+    )
+      return res
+        .status(400)
+        .json({ message: "Hotel already removed from  wishlist" });
+
+    const updatedUser = await UserModel.findByIdAndUpdate(userID, {
+      $pull: {
+        wishlist: listingID,
+      },
+    });
+
+    return res.status(200).json({
+      message: "successfully removed from wishlist",
+    });
   } catch (err: any) {
     console.log(err);
 

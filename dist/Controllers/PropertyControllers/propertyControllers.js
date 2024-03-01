@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.hostCancelReservation = exports.getAllListingsReservations = exports.cancelReservationHandler = exports.getAllUserBookings = exports.validatePaymentAndCompleteReservation = exports.createReservationOrderHanlder = exports.checkAvailability = exports.listPropertyHandler = void 0;
+exports.removeFromWishlist = exports.AddToWishlist = exports.getWishlistData = exports.hostCancelReservation = exports.getAllListingsReservations = exports.cancelReservationHandler = exports.getAllUserBookings = exports.validatePaymentAndCompleteReservation = exports.createReservationOrderHandler = exports.checkAvailability = exports.listPropertyHandler = void 0;
 const zod_1 = require("zod");
 const hotelAddressModel_1 = require("../../Models/hotelAddressModel");
 const hotelLisitingModal_1 = require("../../Models/hotelLisitingModal");
@@ -151,7 +151,7 @@ const checkAvailability = (req, res, next) => __awaiter(void 0, void 0, void 0, 
     }
 });
 exports.checkAvailability = checkAvailability;
-const createReservationOrderHanlder = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const createReservationOrderHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _c;
     try {
         console.log("instance");
@@ -251,7 +251,7 @@ const createReservationOrderHanlder = (req, res, next) => __awaiter(void 0, void
         next(err);
     }
 });
-exports.createReservationOrderHanlder = createReservationOrderHanlder;
+exports.createReservationOrderHandler = createReservationOrderHandler;
 const validatePaymentAndCompleteReservation = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _d;
     try {
@@ -628,11 +628,11 @@ const hostCancelReservation = (req, res, next) => __awaiter(void 0, void 0, void
         ]);
         if (!reservationData) {
             return res.status(400).json({
-                message: "failed to identify the specific reservation of user",
+                message: "failed to identify the specific reservation ",
             });
         }
         let reservation = reservationData[0];
-        console.log(reservationData);
+        // console.log(reservationData);
         const listingID = reservation.listingID;
         let listingData = yield hotelLisitingModal_1.HotelListing.findById(listingID);
         if (!listingData)
@@ -655,13 +655,17 @@ const hostCancelReservation = (req, res, next) => __awaiter(void 0, void 0, void
                 }
             }
         }
+        console.log(dateWiseReservation, "after \t \t");
         const updatedListingData = yield hotelLisitingModal_1.HotelListing.findByIdAndUpdate(listingID, {
             dateWiseReservationData: dateWiseReservation,
-        });
-        yield userModel_1.default.findByIdAndUpdate(reservation.userID, {
+        }, { new: true });
+        console.log(updatedListingData, "updated listing \t \t");
+        const updatedUserData = yield userModel_1.default.findByIdAndUpdate(reservation.userID, {
             $inc: { wallet: reservation.reservationFee },
-        });
-        let updatedReservation = yield reservationModal_1.HotelReservation.findByIdAndUpdate(reservationID, { reservationStatus: "cancelled", paymentStatus: "refuned" });
+        }, { new: true });
+        console.log(updatedUserData, "updated listing \t \t");
+        let updatedReservation = yield reservationModal_1.HotelReservation.findByIdAndUpdate(reservationID, { reservationStatus: "cancelled", paymentStatus: "refunded" }, { new: true });
+        console.log(updatedReservation, "updated listing \t \t");
         return res
             .status(200)
             .json({ message: "reservation cancelled successFully" });
@@ -672,3 +676,101 @@ const hostCancelReservation = (req, res, next) => __awaiter(void 0, void 0, void
     }
 });
 exports.hostCancelReservation = hostCancelReservation;
+const getWishlistData = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _j;
+    try {
+        const userID = new mongoose_1.default.Types.ObjectId((_j = req.userInfo) === null || _j === void 0 ? void 0 : _j.id);
+        if (!userID) {
+            return res.status(400).json({ message: "failed to identify user " });
+        }
+        const userData = yield userModel_1.default.findById(userID);
+        return res.status(200).json({
+            wishlist: userData === null || userData === void 0 ? void 0 : userData.wishlist,
+        });
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+});
+exports.getWishlistData = getWishlistData;
+// add to wishlist
+const AddToWishlist = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _k;
+    try {
+        const userID = new mongoose_1.default.Types.ObjectId((_k = req.userInfo) === null || _k === void 0 ? void 0 : _k.id);
+        if (!userID) {
+            return res.status(400).json({ message: "failed to identify user " });
+        }
+        let listingID = new mongoose_1.default.Types.ObjectId(req.params.listingID);
+        const userData = yield userModel_1.default.findById(userID);
+        if (!listingID) {
+            return res.status(400).json({
+                message: "Failed to identify  the listingID. Try Again ",
+            });
+        }
+        let listingData = yield hotelLisitingModal_1.HotelListing.findById(listingID);
+        if (!listingData)
+            return res.status(400).json({ message: "failed to identify listing " });
+        if (!listingData.approvedForReservation ||
+            !listingData.isActiveForReservation) {
+            return res
+                .status(400)
+                .json({ message: "Sorry the property is not available now " });
+        }
+        if (userData === null || userData === void 0 ? void 0 : userData.wishlist.includes(listingID))
+            return res
+                .status(400)
+                .json({ message: "Hotel already exist in wishlist" });
+        const updatedUser = yield userModel_1.default.findByIdAndUpdate(userID, {
+            $push: {
+                wishlist: listingID,
+            },
+        });
+        return res.status(200).json({
+            message: "successfully added to wishlist",
+        });
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+});
+exports.AddToWishlist = AddToWishlist;
+// remove from wishlist
+const removeFromWishlist = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _l;
+    try {
+        const userID = new mongoose_1.default.Types.ObjectId((_l = req.userInfo) === null || _l === void 0 ? void 0 : _l.id);
+        if (!userID) {
+            return res.status(400).json({ message: "failed to identify user " });
+        }
+        let listingID = new mongoose_1.default.Types.ObjectId(req.params.listingID);
+        const userData = yield userModel_1.default.findById(userID);
+        if (!listingID) {
+            return res.status(400).json({
+                message: "Failed to identify  the listingID. Try Again ",
+            });
+        }
+        let listingData = yield hotelLisitingModal_1.HotelListing.findById(listingID);
+        if (!listingData)
+            return res.status(400).json({ message: "failed to identify listing " });
+        if (!(userData === null || userData === void 0 ? void 0 : userData.wishlist.includes(listingID)))
+            return res
+                .status(400)
+                .json({ message: "Hotel already removed from  wishlist" });
+        const updatedUser = yield userModel_1.default.findByIdAndUpdate(userID, {
+            $pull: {
+                wishlist: listingID,
+            },
+        });
+        return res.status(200).json({
+            message: "successfully removed from wishlist",
+        });
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+});
+exports.removeFromWishlist = removeFromWishlist;
