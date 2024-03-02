@@ -52,6 +52,7 @@ const UserRoutes_1 = __importDefault(require("./Routes/UserRoutes/UserRoutes"));
 const propertyRoutes_1 = __importDefault(require("./Routes/PropertyRoutes/propertyRoutes"));
 const JwtVerification_1 = require("./Middlewares/JwtVerification");
 const checkIsUserBlocked_1 = require("./Middlewares/checkIsUserBlocked");
+const chatRoutes_1 = require("./Routes/ChatRoutes/chatRoutes");
 const PORT = process.env.PORT || 3500;
 // connect to mongodb database
 (0, dbConnection_1.default)();
@@ -78,6 +79,7 @@ app.use('/listing/', listingRoute_1.default);
 app.use(JwtVerification_1.verifyJWT);
 app.use("/admin", (0, VerifyRoles_1.default)(allowedRoles_1.default.Admin), AdminRoutes_1.default);
 app.use("/user", checkIsUserBlocked_1.checkIsUserBlocked, (0, VerifyRoles_1.default)(allowedRoles_1.default.User), UserRoutes_1.default);
+app.use("/chat", (0, VerifyRoles_1.default)(allowedRoles_1.default.User), chatRoutes_1.chatRouter);
 app.use("/property", (0, VerifyRoles_1.default)(allowedRoles_1.default.User), propertyRoutes_1.default);
 app.use((err, req, res, next) => {
     return res.status(500).json({ message: 'server facing unexpected errors' });

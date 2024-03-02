@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
 
-
-
-const otpDataSchema = new mongoose.Schema({
+const OtpDataSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true,
@@ -18,8 +16,4 @@ const otpDataSchema = new mongoose.Schema({
   },
 });
 
-
-
-const otp = mongoose.model("OtpData", otpDataSchema);
-
-export default otp;
+export const OTP = mongoose.model("OtpData", OtpDataSchema);

@@ -37,9 +37,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
-const userModel_1 = __importDefault(require("../../Models/userModel"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const userModel_1 = require("../../Models/userModel");
 const handleRefreshToken = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const cookies = req.cookies;
     console.log("req for refresh");
@@ -53,7 +53,7 @@ const handleRefreshToken = (req, res, next) => __awaiter(void 0, void 0, void 0,
         if (!ACCESS_SECRET || !REFRESH_SECRET) {
             throw new Error("Failed to create token");
         }
-        const foundUser = yield userModel_1.default.findOne({ refreshToken });
+        const foundUser = yield userModel_1.User.findOne({ refreshToken });
         if (!foundUser)
             return res.sendStatus(403); //Forbidden
         jsonwebtoken_1.default.verify(refreshToken, REFRESH_SECRET, (err, decoded) => {
@@ -71,10 +71,11 @@ const handleRefreshToken = (req, res, next) => __awaiter(void 0, void 0, void 0,
                     roles: roles,
                 },
             }, ACCESS_SECRET, { expiresIn: "50s" });
-            res.json({ roles, accessToken, user: decoded.username });
+            res.json({ roles, accessToken, user: decoded.username, image: foundUser.image });
         });
     }
     catch (err) {
+        console.log(err);
         next(err);
     }
 });

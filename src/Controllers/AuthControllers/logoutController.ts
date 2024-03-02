@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import User from "../../Models/userModel";
+import { User } from "../../Models/userModel";
+
 
 const handleLogout = async (req: Request, res: Response) => {
   //   console.log('logout handler');

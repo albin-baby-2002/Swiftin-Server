@@ -4,7 +4,7 @@ import { NextFunction, Request, Response } from "express";
 dotenv.config();
 
 import jwt, { JwtPayload } from "jsonwebtoken";
-import UserModel from "../Models/userModel";
+import { User } from "../Models/userModel";
 
 export interface CustomRequest extends Request {
   userInfo?: {
@@ -36,7 +36,7 @@ export const checkIsUserBlocked = async (
     
         let userID = req.userInfo?.id;
         
-        const userData = await UserModel.findById(userID);
+        const userData = await User.findById(userID);
         
         if( userData?.blocked){
             return res.status(400).json({message:'you are blocked by admin'});

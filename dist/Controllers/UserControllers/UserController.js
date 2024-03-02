@@ -13,9 +13,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.profileImgChangeHandler = exports.editProfileHandler = exports.getProfileInfo = void 0;
-const userModel_1 = __importDefault(require("../../Models/userModel"));
 const personalAddress_1 = require("../../Models/personalAddress");
 const mongoose_1 = __importDefault(require("mongoose"));
+const userModel_1 = require("../../Models/userModel");
 const getProfileInfo = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -24,7 +24,7 @@ const getProfileInfo = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         }
         let userID = new mongoose_1.default.Types.ObjectId(req.userInfo.id);
         console.log(userID);
-        const userData = yield userModel_1.default.aggregate([
+        const userData = yield userModel_1.User.aggregate([
             {
                 $match: {
                     _id: userID,
@@ -78,7 +78,7 @@ const editProfileHandler = (req, res, next) => __awaiter(void 0, void 0, void 0,
         }
         const { username, phone, aboutYou, addressLine, locality, city, district, state, country, pinCode, } = req.body;
         console.log(req.body);
-        const user = yield userModel_1.default.findById(userID);
+        const user = yield userModel_1.User.findById(userID);
         if (user) {
             user.username = username;
             user.phone = phone;
@@ -128,7 +128,7 @@ const profileImgChangeHandler = (req, res, next) => __awaiter(void 0, void 0, vo
         }
         const { publicID } = req.body;
         console.log(req.body, "img upload ");
-        const user = yield userModel_1.default.findById(userID);
+        const user = yield userModel_1.User.findById(userID);
         if (user) {
             user.image = publicID;
             yield user.save();

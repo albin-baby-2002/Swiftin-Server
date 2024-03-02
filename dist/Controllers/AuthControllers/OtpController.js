@@ -14,11 +14,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resendOtpHandler = exports.verifyOtpHandler = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const otpDataModel_1 = __importDefault(require("../../Models/otpDataModel"));
-const userModel_1 = __importDefault(require("../../Models/userModel"));
+const otpDataModel_1 = require("../../Models/otpDataModel");
 const mongoose_1 = __importDefault(require("mongoose"));
 const userVerificationHelper_1 = require("../../Helpers/userVerificationHelper");
 const resendAttempts_1 = __importDefault(require("../../Models/resendAttempts"));
+const userModel_1 = require("../../Models/userModel");
 const verifyOtpHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { otp, email, userId } = req.body;
@@ -29,12 +29,12 @@ const verifyOtpHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, f
         if (!email || !userId) {
             return res.status(400).json({ message: "email or userId is empty" });
         }
-        const otpVerificationData = yield otpDataModel_1.default.findOne({
+        const otpVerificationData = yield otpDataModel_1.OTP.findOne({
             userId,
         });
         if (otpVerificationData) {
             if (yield bcrypt_1.default.compare(otp, otpVerificationData.otp)) {
-                const updateUser = yield userModel_1.default.updateOne({ _id: userId }, { $set: { verified: true } });
+                const updateUser = yield userModel_1.User.updateOne({ _id: userId }, { $set: { verified: true } });
                 if (updateUser) {
                     return res.status(200).json({ message: "success" });
                 }
@@ -63,7 +63,7 @@ const resendOtpHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, f
         if (!email || !userId) {
             return res.status(400).json({ message: "email or userId is empty" });
         }
-        const user = yield userModel_1.default.findById(userId);
+        const user = yield userModel_1.User.findById(userId);
         const resendAttempts = yield resendAttempts_1.default.findOne({
             email: user === null || user === void 0 ? void 0 : user.email,
         });

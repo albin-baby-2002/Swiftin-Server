@@ -3,8 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.OTP = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
-const otpDataSchema = new mongoose_1.default.Schema({
+const OtpDataSchema = new mongoose_1.default.Schema({
     userId: {
         type: String,
         required: true,
@@ -19,5 +20,4 @@ const otpDataSchema = new mongoose_1.default.Schema({
         default: Date.now,
     },
 });
-const otp = mongoose_1.default.model("OtpData", otpDataSchema);
-exports.default = otp;
+exports.OTP = mongoose_1.default.model("OtpData", OtpDataSchema);

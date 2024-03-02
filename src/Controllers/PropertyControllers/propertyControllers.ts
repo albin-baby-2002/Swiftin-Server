@@ -8,8 +8,8 @@ import { HotelReservation } from "../../Models/reservationModal";
 import mongoose from "mongoose";
 import Razorpay from "razorpay";
 import { RazorPayDetails } from "../../Models/razorPayDetailsModal";
-import UserModel from "../../Models/userModel";
 import { ListingData } from "../GeneralData/LisitingData";
+import { User } from "../../Models/userModel";
 
 const HotelListingSchema = z.object({
   addressLine: z.string().min(3, " Min length For address is 3").max(20),
@@ -632,7 +632,7 @@ export const cancelReservationHandler = async (
 
     await reservation.save();
 
-    await UserModel.findByIdAndUpdate(userID, {
+    await User.findByIdAndUpdate(userID, {
       $inc: { wallet: reservation.reservationFee },
     });
 
@@ -933,7 +933,7 @@ export const hostCancelReservation = async (
 
     console.log(updatedListingData, "updated listing \t \t");
 
-    const updatedUserData = await UserModel.findByIdAndUpdate(
+    const updatedUserData = await User.findByIdAndUpdate(
       reservation.userID,
       {
         $inc: { wallet: reservation.reservationFee },
@@ -972,7 +972,7 @@ export const getWishlistData = async (
       return res.status(400).json({ message: "failed to identify user " });
     }
 
-    const userData = await UserModel.findById(userID);
+    const userData = await User.findById(userID);
 
     return res.status(200).json({
       wishlist: userData?.wishlist,
@@ -1000,7 +1000,7 @@ export const AddToWishlist = async (
 
     let listingID = new mongoose.Types.ObjectId(req.params.listingID);
 
-    const userData = await UserModel.findById(userID);
+    const userData = await User.findById(userID);
 
     if (!listingID) {
       return res.status(400).json({
@@ -1031,7 +1031,7 @@ export const AddToWishlist = async (
         .status(400)
         .json({ message: "Hotel already exist in wishlist" });
 
-    const updatedUser = await UserModel.findByIdAndUpdate(userID, {
+    const updatedUser = await User.findByIdAndUpdate(userID, {
       $push: {
         wishlist: listingID,
       },
@@ -1063,7 +1063,7 @@ export const removeFromWishlist = async (
 
     let listingID = new mongoose.Types.ObjectId(req.params.listingID);
 
-    const userData = await UserModel.findById(userID);
+    const userData = await User.findById(userID);
 
     if (!listingID) {
       return res.status(400).json({
@@ -1085,7 +1085,7 @@ export const removeFromWishlist = async (
         .status(400)
         .json({ message: "Hotel already removed from  wishlist" });
 
-    const updatedUser = await UserModel.findByIdAndUpdate(userID, {
+    const updatedUser = await User.findByIdAndUpdate(userID, {
       $pull: {
         wishlist: listingID,
       },

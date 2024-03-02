@@ -14,9 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.loginController = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const userModel_1 = __importDefault(require("../../Models/userModel"));
 const zod_1 = require("zod");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const userModel_1 = require("../../Models/userModel");
 const authSchema = zod_1.z.object({
     email: zod_1.z.string().email("Enter a valid email"),
     password: zod_1.z.string().min(8, "Password should be at least 8 character long"),
@@ -31,7 +31,7 @@ const loginController = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
     if (validationResult.success) {
         const { email, password } = validationResult.data;
         try {
-            const foundUser = yield userModel_1.default.findOne({ email });
+            const foundUser = yield userModel_1.User.findOne({ email });
             if (!foundUser)
                 return res.sendStatus(404); // 404 - User Not found
             if (!foundUser.password && foundUser.googleId) {
@@ -75,7 +75,7 @@ const loginController = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
                     sameSite: "none",
                     maxAge: 24 * 60 * 60 * 1000,
                 });
-                res.status(200).json({ roles, accessToken, user: foundUser.username });
+                res.status(200).json({ roles, accessToken, user: foundUser.username, image: foundUser.image });
             }
             else {
                 return res.status(400).json({ message: "Wrong password" });

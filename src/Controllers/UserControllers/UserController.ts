@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import User from "../../Models/userModel";
 import { PersonalAddress } from "../../Models/personalAddress";
 import mongoose, { ObjectId } from "mongoose";
+import { User } from "../../Models/userModel";
 
 interface CustomRequest extends Request {
   userInfo?: {

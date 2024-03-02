@@ -1,8 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import User from "../../Models/userModel";
+
 import mongoose from "mongoose";
 import { ZodError, z } from "zod";
 import bcrypt from "bcrypt";
+import { User } from "../../Models/userModel";
 
 interface GetUsersQuery {
   search: string;

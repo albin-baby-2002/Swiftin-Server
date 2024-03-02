@@ -31,19 +31,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.checkIsUserBlocked = void 0;
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
-const userModel_1 = __importDefault(require("../Models/userModel"));
+const userModel_1 = require("../Models/userModel");
 const checkIsUserBlocked = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         let userID = (_a = req.userInfo) === null || _a === void 0 ? void 0 : _a.id;
-        const userData = yield userModel_1.default.findById(userID);
+        const userData = yield userModel_1.User.findById(userID);
         if (userData === null || userData === void 0 ? void 0 : userData.blocked) {
             return res.status(400).json({ message: 'you are blocked by admin' });
         }

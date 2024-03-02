@@ -24,7 +24,7 @@ interface User extends mongoose.Document {
   wishlist: mongoose.Schema.Types.ObjectId[];
 }
 
-const userSchema = new mongoose.Schema<User>({
+const UserSchema = new mongoose.Schema<User>({
   username: {
     type: String,
     required: true,
@@ -86,6 +86,4 @@ const userSchema = new mongoose.Schema<User>({
   ],
 });
 
-const UserModel = mongoose.model("User", userSchema);
-
-export default UserModel;
+export const User = mongoose.model("User", UserSchema);

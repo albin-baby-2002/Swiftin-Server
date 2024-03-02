@@ -1,10 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
-import otpData from "../../Models/otpDataModel";
-import User from "../../Models/userModel";
+import  { OTP } from "../../Models/otpDataModel";
+
 import mongoose from "mongoose";
 import { sendOtpEmail } from "../../Helpers/userVerificationHelper";
-import otpResendAttempts from "../../Models/resendAttempts";
+import OtpResendAttempts from "../../Models/resendAttempts";
+import { User } from "../../Models/userModel";
 
 export const verifyOtpHandler = async (
   req: Request,
@@ -24,7 +25,7 @@ export const verifyOtpHandler = async (
       return res.status(400).json({ message: "email or userId is empty" });
     }
 
-    const otpVerificationData = await otpData.findOne({
+    const otpVerificationData = await OTP.findOne({
       userId,
     });
 
@@ -69,7 +70,7 @@ export const resendOtpHandler = async (
 
     const user = await User.findById(userId);
 
-    const resendAttempts = await otpResendAttempts.findOne({
+    const resendAttempts = await OtpResendAttempts.findOne({
       email: user?.email,
     });
 
@@ -88,7 +89,7 @@ export const resendOtpHandler = async (
 
         await resendAttempts.save();
       } else {
-        const newResendAttempt = new otpResendAttempts({
+        const newResendAttempt = new OtpResendAttempts({
           userID: user._id,
           email: user.email,
           attempts: 1,

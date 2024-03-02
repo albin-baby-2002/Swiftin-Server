@@ -1,0 +1,31 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Chat = void 0;
+const mongoose = require("mongoose");
+const ChatModelSchema = new mongoose.Schema({
+    chatName: {
+        type: String,
+        trim: true,
+    },
+    isGroupChat: {
+        type: Boolean,
+        default: false,
+    },
+    users: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        },
+    ],
+    latestMessage: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Message",
+    },
+    groupAdmin: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+    },
+}, {
+    timestamps: true,
+});
+exports.Chat = mongoose.model("Chat", ChatModelSchema);

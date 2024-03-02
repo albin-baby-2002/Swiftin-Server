@@ -14,9 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.newUserRegister = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const userModel_1 = __importDefault(require("../../Models/userModel"));
 const userVerificationHelper_1 = require("../../Helpers/userVerificationHelper");
 const zod_1 = require("zod");
+const userModel_1 = require("../../Models/userModel");
 const userSchema = zod_1.z.object({
     email: zod_1.z.string().email("Enter a valid email"),
     username: zod_1.z.string().min(5, "user name should have min 5 character"),
@@ -36,7 +36,7 @@ const newUserRegister = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
     if (validationResult.success) {
         const { email, username, password } = validationResult.data;
         try {
-            const existingUser = yield userModel_1.default.findOne({ email });
+            const existingUser = yield userModel_1.User.findOne({ email });
             if (existingUser === null || existingUser === void 0 ? void 0 : existingUser.verified) {
                 return res.sendStatus(409);
             }
@@ -47,7 +47,7 @@ const newUserRegister = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
                     .json({ userId: existingUser._id, email: existingUser.email });
             }
             const hashedPwd = yield bcrypt_1.default.hash(password, 10);
-            const newUser = new userModel_1.default({
+            const newUser = new userModel_1.User({
                 username,
                 password: hashedPwd,
                 email,

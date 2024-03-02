@@ -20,7 +20,6 @@ import {
   cancelReservationHandler,
   checkAvailability,
   createReservationOrderHandler,
-  createReservationOrderHanlder,
   getAllListingsReservations,
   getAllUserBookings,
   getWishlistData,

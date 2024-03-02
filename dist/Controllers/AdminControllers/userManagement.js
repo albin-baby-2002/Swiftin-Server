@@ -13,9 +13,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.unBlockUserHandler = exports.blockUserHandler = exports.editUserHandler = exports.getUserDataHandler = exports.addNewUserHandler = exports.getAllUsers = void 0;
-const userModel_1 = __importDefault(require("../../Models/userModel"));
 const zod_1 = require("zod");
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const userModel_1 = require("../../Models/userModel");
 const AddUserSchema = zod_1.z.object({
     email: zod_1.z.string().email("Enter a valid email"),
     username: zod_1.z.string().min(5, "user name should have min 5 character"),
@@ -62,7 +62,7 @@ const getAllUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         let filterQuery = { username: {}, "roles.Admin": { $exists: false } };
         filterQuery.username = { $regex: search, $options: "i" };
         console.log(" page number ", page);
-        const users = yield userModel_1.default.aggregate([
+        const users = yield userModel_1.User.aggregate([
             {
                 $match: filterQuery,
             },
@@ -90,7 +90,7 @@ const getAllUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
                 },
             },
         ]);
-        const totalUsersMatchQuery = yield userModel_1.default.aggregate([
+        const totalUsersMatchQuery = yield userModel_1.User.aggregate([
             {
                 $match: filterQuery,
             },
@@ -115,11 +115,11 @@ const addNewUserHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, 
         }
         if (validationResult.success) {
             const { email, username, password, phone } = validationResult.data;
-            const duplicate = yield userModel_1.default.findOne({ email });
+            const duplicate = yield userModel_1.User.findOne({ email });
             if (duplicate)
                 return res.sendStatus(409); // Conflict
             const hashedPwd = yield bcrypt_1.default.hash(password, 10);
-            const newUser = new userModel_1.default({
+            const newUser = new userModel_1.User({
                 username,
                 password: hashedPwd,
                 email,
@@ -139,7 +139,7 @@ exports.addNewUserHandler = addNewUserHandler;
 const getUserDataHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let userID = req.params.userID;
-        const user = yield userModel_1.default.findById(userID);
+        const user = yield userModel_1.User.findById(userID);
         if (!user) {
             return res
                 .status(400)
@@ -164,7 +164,7 @@ const editUserHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         }
         if (validationResult.success) {
             const { email, username, phone } = validationResult.data;
-            const updatedUser = yield userModel_1.default.findByIdAndUpdate(userID, {
+            const updatedUser = yield userModel_1.User.findByIdAndUpdate(userID, {
                 username,
                 email,
                 phone,
@@ -184,7 +184,7 @@ exports.editUserHandler = editUserHandler;
 const blockUserHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userID = req.params.userID;
-        const updatedUser = yield userModel_1.default.findByIdAndUpdate(userID, {
+        const updatedUser = yield userModel_1.User.findByIdAndUpdate(userID, {
             blocked: true,
         });
         if (!updatedUser) {
@@ -201,7 +201,7 @@ exports.blockUserHandler = blockUserHandler;
 const unBlockUserHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userID = req.params.userID;
-        const updatedUser = yield userModel_1.default.findByIdAndUpdate(userID, {
+        const updatedUser = yield userModel_1.User.findByIdAndUpdate(userID, {
             blocked: false,
         });
         if (!updatedUser) {

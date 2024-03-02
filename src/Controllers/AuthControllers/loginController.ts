@@ -1,9 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
 
-import User from "../../Models/userModel";
+
 import { ZodError, z } from "zod";
 import jwt from "jsonwebtoken";
+import { User } from "../../Models/userModel";
 
 const authSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -98,7 +99,7 @@ export const loginController = async (
           maxAge: 24 * 60 * 60 * 1000,
         });
 
-        res.status(200).json({ roles, accessToken, user: foundUser.username });
+        res.status(200).json({ roles, accessToken, user: foundUser.username,image:foundUser.image });
       } else {
         return res.status(400).json({ message: "Wrong password" });
       }

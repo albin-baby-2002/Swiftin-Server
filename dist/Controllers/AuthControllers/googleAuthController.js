@@ -38,9 +38,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const userModel_1 = __importDefault(require("../../Models/userModel"));
 const google_auth_library_1 = require("google-auth-library");
 const axios_1 = __importDefault(require("axios"));
+const userModel_1 = require("../../Models/userModel");
 const handleGoogleAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const oAuth2Client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, "postmessage");
@@ -57,7 +57,7 @@ const handleGoogleAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, f
                 .then((res) => res.data);
             console.log(userInfo);
             const { sub, name, email, picture } = userInfo;
-            let user = yield userModel_1.default.findOne({ email });
+            let user = yield userModel_1.User.findOne({ email });
             if (user === null || user === void 0 ? void 0 : user.blocked) {
                 return res.status(400).json({
                     message: "Your are blocked by admin ",
@@ -69,7 +69,7 @@ const handleGoogleAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, f
                 yield user.save();
             }
             if (!user) {
-                const newUser = new userModel_1.default({
+                const newUser = new userModel_1.User({
                     username: name,
                     googleId: sub,
                     image: picture,
@@ -102,7 +102,7 @@ const handleGoogleAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, f
                 sameSite: "none",
                 maxAge: 24 * 60 * 60 * 1000,
             });
-            res.status(200).json({ roles, accessToken, user: user.username });
+            res.status(200).json({ roles, accessToken, user: user.username, image: user.image });
         }
     }
     catch (err) {

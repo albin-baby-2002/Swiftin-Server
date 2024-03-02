@@ -2,10 +2,11 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import bcrypt from "bcrypt";
-import User from "../../Models/userModel";
+
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import mongoose from "mongoose";
+import { User } from "../../Models/userModel";
 
 const handleRefreshToken = async (
   req: Request,
@@ -60,9 +61,10 @@ const handleRefreshToken = async (
         { expiresIn: "50s" }
       );
 
-      res.json({ roles, accessToken, user: decoded.username });
+      res.json({ roles, accessToken, user: decoded.username ,image:foundUser.image});
     });
   } catch (err: any) {
+    console.log(err);
     next(err);
   }
 };

@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
 
-import User from "../../Models/userModel";
 import { sendOtpEmail } from "../../Helpers/userVerificationHelper";
 import { ZodError, z } from "zod";
+import { User } from "../../Models/userModel";
 
 const userSchema = z.object({
   email: z.string().email("Enter a valid email"),

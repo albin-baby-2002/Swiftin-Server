@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt'
-import otpData from '../Models/otpDataModel'
+
 import nodemailer from 'nodemailer'
 import * as dotenv from "dotenv";
+import { OTP } from '../Models/otpDataModel';
 dotenv.config();
 
 export const sendOtpEmail = async ({ _id, email }:{_id:string,email:string}) => {
@@ -29,15 +30,15 @@ export const sendOtpEmail = async ({ _id, email }:{_id:string,email:string}) => 
 
   const hashedOtp = await bcrypt.hash(otp, 10);
 
-  const existingOtpData = await otpData.findOne({ userId: _id });
+  const existingOtpData = await OTP.findOne({ userId: _id });
 
   if (existingOtpData) {
-    const deletedOldOtpData = await otpData.deleteOne({ userId: _id });
+    const deletedOldOtpData = await OTP.deleteOne({ userId: _id });
 
     // redirect if deletion failed
   }
 
-  const otpdata = new otpData({
+  const otpdata = new OTP({
     userId: _id,
     otp: hashedOtp,
   });

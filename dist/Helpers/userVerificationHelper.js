@@ -37,9 +37,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendOtpEmail = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const otpDataModel_1 = __importDefault(require("../Models/otpDataModel"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const dotenv = __importStar(require("dotenv"));
+const otpDataModel_1 = require("../Models/otpDataModel");
 dotenv.config();
 const sendOtpEmail = ({ _id, email }) => __awaiter(void 0, void 0, void 0, function* () {
     const otp = `${Math.floor(1000 + Math.random() * 9000)}`;
@@ -61,12 +61,12 @@ const sendOtpEmail = ({ _id, email }) => __awaiter(void 0, void 0, void 0, funct
         html: `<P> Your OTP for verification is ${otp} . Don't share your otp !</p> <p> The otp is only valid for 5 minutes</p> `,
     };
     const hashedOtp = yield bcrypt_1.default.hash(otp, 10);
-    const existingOtpData = yield otpDataModel_1.default.findOne({ userId: _id });
+    const existingOtpData = yield otpDataModel_1.OTP.findOne({ userId: _id });
     if (existingOtpData) {
-        const deletedOldOtpData = yield otpDataModel_1.default.deleteOne({ userId: _id });
+        const deletedOldOtpData = yield otpDataModel_1.OTP.deleteOne({ userId: _id });
         // redirect if deletion failed
     }
-    const otpdata = new otpDataModel_1.default({
+    const otpdata = new otpDataModel_1.OTP({
         userId: _id,
         otp: hashedOtp,
     });

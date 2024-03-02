@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import User from "../../Models/userModel";
+
 import mongoose from "mongoose";
 import { HotelListing } from "../../Models/hotelLisitingModal";
 

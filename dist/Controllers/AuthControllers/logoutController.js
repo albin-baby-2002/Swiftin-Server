@@ -8,11 +8,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const userModel_1 = __importDefault(require("../../Models/userModel"));
+const userModel_1 = require("../../Models/userModel");
 const handleLogout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //   console.log('logout handler');
     // On client, also delete the accessToken
@@ -22,7 +19,7 @@ const handleLogout = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         return res.sendStatus(204); //No content
     const refreshToken = cookies.jwt;
     // Is refreshToken in db?
-    const foundUser = yield userModel_1.default.findOne({ refreshToken }).exec();
+    const foundUser = yield userModel_1.User.findOne({ refreshToken }).exec();
     if (!foundUser) {
         res.clearCookie("jwt", { httpOnly: true, sameSite: "none", secure: true });
         return res.sendStatus(204);

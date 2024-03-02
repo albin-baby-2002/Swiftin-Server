@@ -20,7 +20,7 @@ const reservationModal_1 = require("../../Models/reservationModal");
 const mongoose_1 = __importDefault(require("mongoose"));
 const razorpay_1 = __importDefault(require("razorpay"));
 const razorPayDetailsModal_1 = require("../../Models/razorPayDetailsModal");
-const userModel_1 = __importDefault(require("../../Models/userModel"));
+const userModel_1 = require("../../Models/userModel");
 const HotelListingSchema = zod_1.z.object({
     addressLine: zod_1.z.string().min(3, " Min length For address is 3").max(20),
     city: zod_1.z.string().min(3, " Min length For city is 3").max(15),
@@ -436,7 +436,7 @@ const cancelReservationHandler = (req, res, next) => __awaiter(void 0, void 0, v
         });
         reservation.reservationStatus = "cancelled";
         yield reservation.save();
-        yield userModel_1.default.findByIdAndUpdate(userID, {
+        yield userModel_1.User.findByIdAndUpdate(userID, {
             $inc: { wallet: reservation.reservationFee },
         });
         reservation.paymentStatus = "refunded";
@@ -660,7 +660,7 @@ const hostCancelReservation = (req, res, next) => __awaiter(void 0, void 0, void
             dateWiseReservationData: dateWiseReservation,
         }, { new: true });
         console.log(updatedListingData, "updated listing \t \t");
-        const updatedUserData = yield userModel_1.default.findByIdAndUpdate(reservation.userID, {
+        const updatedUserData = yield userModel_1.User.findByIdAndUpdate(reservation.userID, {
             $inc: { wallet: reservation.reservationFee },
         }, { new: true });
         console.log(updatedUserData, "updated listing \t \t");
@@ -683,7 +683,7 @@ const getWishlistData = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         if (!userID) {
             return res.status(400).json({ message: "failed to identify user " });
         }
-        const userData = yield userModel_1.default.findById(userID);
+        const userData = yield userModel_1.User.findById(userID);
         return res.status(200).json({
             wishlist: userData === null || userData === void 0 ? void 0 : userData.wishlist,
         });
@@ -703,7 +703,7 @@ const AddToWishlist = (req, res, next) => __awaiter(void 0, void 0, void 0, func
             return res.status(400).json({ message: "failed to identify user " });
         }
         let listingID = new mongoose_1.default.Types.ObjectId(req.params.listingID);
-        const userData = yield userModel_1.default.findById(userID);
+        const userData = yield userModel_1.User.findById(userID);
         if (!listingID) {
             return res.status(400).json({
                 message: "Failed to identify  the listingID. Try Again ",
@@ -722,7 +722,7 @@ const AddToWishlist = (req, res, next) => __awaiter(void 0, void 0, void 0, func
             return res
                 .status(400)
                 .json({ message: "Hotel already exist in wishlist" });
-        const updatedUser = yield userModel_1.default.findByIdAndUpdate(userID, {
+        const updatedUser = yield userModel_1.User.findByIdAndUpdate(userID, {
             $push: {
                 wishlist: listingID,
             },
@@ -746,7 +746,7 @@ const removeFromWishlist = (req, res, next) => __awaiter(void 0, void 0, void 0,
             return res.status(400).json({ message: "failed to identify user " });
         }
         let listingID = new mongoose_1.default.Types.ObjectId(req.params.listingID);
-        const userData = yield userModel_1.default.findById(userID);
+        const userData = yield userModel_1.User.findById(userID);
         if (!listingID) {
             return res.status(400).json({
                 message: "Failed to identify  the listingID. Try Again ",
@@ -759,7 +759,7 @@ const removeFromWishlist = (req, res, next) => __awaiter(void 0, void 0, void 0,
             return res
                 .status(400)
                 .json({ message: "Hotel already removed from  wishlist" });
-        const updatedUser = yield userModel_1.default.findByIdAndUpdate(userID, {
+        const updatedUser = yield userModel_1.User.findByIdAndUpdate(userID, {
             $pull: {
                 wishlist: listingID,
             },

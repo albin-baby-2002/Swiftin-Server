@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
 
-
-
-const otpResendAttemptsSchema = new mongoose.Schema({
+const OtpResendAttemptsSchema = new mongoose.Schema({
   userID: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -24,6 +22,6 @@ const otpResendAttemptsSchema = new mongoose.Schema({
   },
 });
 
-const otpResendAttempts = mongoose.model("otpReSends", otpResendAttemptsSchema);
+const OtpResendAttempts = mongoose.model("otpReSends", OtpResendAttemptsSchema);
 
-export default otpResendAttempts;
+export default OtpResendAttempts;

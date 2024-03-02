@@ -2,11 +2,12 @@ import * as dotenv from "dotenv";
 dotenv.config();
 import jwt from "jsonwebtoken";
 import { google } from "googleapis";
-import User from "../../Models/userModel";
+
 import { Request, Response, NextFunction } from "express";
 import { JWT, OAuth2Client } from "google-auth-library";
 import { error } from "console";
 import axios from "axios";
+import { User } from "../../Models/userModel";
 
 const handleGoogleAuth = async (
   req: Request,
@@ -108,7 +109,7 @@ const handleGoogleAuth = async (
         maxAge: 24 * 60 * 60 * 1000,
       });
 
-      res.status(200).json({ roles, accessToken, user: user.username });
+      res.status(200).json({ roles, accessToken, user: user.username ,image:user.image});
     }
   } catch (err: any) {
     next(err);
