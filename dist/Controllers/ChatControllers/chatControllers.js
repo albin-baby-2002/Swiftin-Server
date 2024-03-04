@@ -33,7 +33,6 @@ const SearchUsersForChat = (req, res, next) => __awaiter(void 0, void 0, void 0,
             _id: { $ne: (_a = req.userInfo) === null || _a === void 0 ? void 0 : _a.id },
         };
         const Users = yield userModel_1.User.find(query, { username: 1, email: 1, image: 1 });
-        console.log(Users);
         return res.status(200).json({ Users });
     }
     catch (err) {
@@ -63,7 +62,7 @@ const GetExistingConversationOrCreateNew = (req, res, next) => __awaiter(void 0,
             select: "username email image",
         });
         if (conversation.length > 0) {
-            return res.status(200).json({ conversation });
+            return res.status(200).json({ conversation: conversation[0] });
         }
         else {
             let conversation = new chatModel_1.Chat({
@@ -86,7 +85,7 @@ const GetExistingConversationOrCreateNew = (req, res, next) => __awaiter(void 0,
 });
 exports.GetExistingConversationOrCreateNew = GetExistingConversationOrCreateNew;
 const getAllConversationsData = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d;
+    var _d, _e;
     try {
         let conversations = yield chatModel_1.Chat.find({
             users: { $elemMatch: { $eq: (_d = req.userInfo) === null || _d === void 0 ? void 0 : _d.id } },
@@ -95,7 +94,8 @@ const getAllConversationsData = (req, res, next) => __awaiter(void 0, void 0, vo
             .populate({ path: "groupAdmin", select: "username email image" })
             .populate("latestMessage")
             .sort({ updatedAt: -1 });
-        return res.status(200).json({ conversations });
+        console.log(conversations);
+        return res.status(200).json({ conversations, userID: (_e = req.userInfo) === null || _e === void 0 ? void 0 : _e.id });
     }
     catch (err) {
         console.log(err);

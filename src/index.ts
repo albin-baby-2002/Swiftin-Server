@@ -29,6 +29,7 @@ import propertyRoutes from "./Routes/PropertyRoutes/propertyRoutes"
 import { verifyJWT } from "./Middlewares/JwtVerification";
 import { checkIsUserBlocked } from "./Middlewares/checkIsUserBlocked";
 import { chatRouter } from "./Routes/ChatRoutes/chatRoutes";
+import { messageRouter } from "./Routes/MessageRoutes/messageRoute";
 
 const PORT = process.env.PORT || 3500;
 
@@ -71,6 +72,7 @@ app.use(verifyJWT);
 app.use("/admin", verifyRoles(ROLES_LIST.Admin), adminRoutes);
 app.use("/user",checkIsUserBlocked , verifyRoles(ROLES_LIST.User), userRoutes );
 app.use("/chat",verifyRoles(ROLES_LIST.User),chatRouter)
+app.use("/messages",verifyRoles(ROLES_LIST.User),messageRouter)
 app.use("/property",verifyRoles(ROLES_LIST.User),propertyRoutes)
 
 

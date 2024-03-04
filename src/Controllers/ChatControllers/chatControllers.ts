@@ -37,7 +37,7 @@ export const SearchUsersForChat = async (
 
     const Users = await User.find(query,{username:1,email:1,image:1});
     
-    console.log(Users)
+ 
 
     return res.status(200).json({ Users });
   } catch (err: any) {
@@ -75,7 +75,7 @@ export const GetExistingConversationOrCreateNew = async (
     });
 
     if (conversation.length > 0) {
-      return res.status(200).json({ conversation });
+      return res.status(200).json({ conversation:conversation[0] });
     } else {
       let conversation = new Chat({
         chatName: "sender",
@@ -112,8 +112,11 @@ export const getAllConversationsData = async (
       .populate({ path: "groupAdmin", select: "username email image" })
       .populate("latestMessage")
       .sort({updatedAt:-1});
+      
+      console.log(conversations)
+      
 
-    return res.status(200).json({ conversations });
+    return res.status(200).json({ conversations,userID:req.userInfo?.id });
   } catch (err: any) {
     console.log(err);
 
