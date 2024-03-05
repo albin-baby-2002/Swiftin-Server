@@ -70,14 +70,14 @@ export const getAllMessagesOfChat = async (
     const chatID = req.params.chatID;
 
     if (!chatID) {
-      return res.status(400).json({ message: "failed to identify chat" });
+      return res.status(400).json({ message: "failed to identify chat" }) ;
     }
 
     const messages = await Message.find({ chat: chatID })
       .populate("sender", "username email image")
       .populate("chat");
 
-    return res.status(200).json(messages );
+    return res.status(200).json(messages);
   } catch (err: any) {
     console.log(err);
 

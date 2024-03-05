@@ -65,7 +65,7 @@ export const hotelDataBySearch = async (
       }
     }
 
-    let limit = 5;
+    let limit = 4;
 
     console.log(search, "search");
 
@@ -175,7 +175,9 @@ export const hotelDataBySearch = async (
 
     const totalPages = Math.ceil(totalProperties / limit);
 
-    return res.status(200).json({ properties, totalPages, totalHotels:totalProperties });
+    return res
+      .status(200)
+      .json({ properties, totalPages, totalHotels: totalProperties });
   } catch (err: any) {
     console.log(err);
 

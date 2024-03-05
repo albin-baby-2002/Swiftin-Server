@@ -109,7 +109,7 @@ const handleGoogleAuth = async (
         maxAge: 24 * 60 * 60 * 1000,
       });
 
-      res.status(200).json({ roles, accessToken, user: user.username ,image:user.image});
+      res.status(200).json({ roles, accessToken, user: user.username ,image:user.image,userID:user._id});
     }
   } catch (err: any) {
     next(err);

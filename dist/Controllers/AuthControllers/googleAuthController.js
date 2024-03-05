@@ -102,7 +102,7 @@ const handleGoogleAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, f
                 sameSite: "none",
                 maxAge: 24 * 60 * 60 * 1000,
             });
-            res.status(200).json({ roles, accessToken, user: user.username, image: user.image });
+            res.status(200).json({ roles, accessToken, user: user.username, image: user.image, userID: user._id });
         }
     }
     catch (err) {

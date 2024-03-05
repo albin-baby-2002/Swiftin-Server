@@ -30,14 +30,15 @@ export const SearchUsersForChat = async (
         { username: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
       ],
+      "roles.Admin": { $ne: 5150 },
       blocked: false,
       verified: true,
       _id: { $ne: req.userInfo?.id },
     };
 
-    const Users = await User.find(query,{username:1,email:1,image:1});
+    const Users = await User.find(query, { username: 1, email: 1, image: 1 });
     
- 
+    
 
     return res.status(200).json({ Users });
   } catch (err: any) {
@@ -75,7 +76,7 @@ export const GetExistingConversationOrCreateNew = async (
     });
 
     if (conversation.length > 0) {
-      return res.status(200).json({ conversation:conversation[0] });
+      return res.status(200).json({ conversation: conversation[0] });
     } else {
       let conversation = new Chat({
         chatName: "sender",
@@ -111,12 +112,9 @@ export const getAllConversationsData = async (
       .populate({ path: "users", select: "username email image" })
       .populate({ path: "groupAdmin", select: "username email image" })
       .populate("latestMessage")
-      .sort({updatedAt:-1});
-      
-      console.log(conversations)
-      
+      .sort({ updatedAt: -1 });
 
-    return res.status(200).json({ conversations,userID:req.userInfo?.id });
+    return res.status(200).json({ conversations, userID: req.userInfo?.id });
   } catch (err: any) {
     console.log(err);
 

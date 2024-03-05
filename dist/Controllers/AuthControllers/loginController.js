@@ -75,7 +75,7 @@ const loginController = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
                     sameSite: "none",
                     maxAge: 24 * 60 * 60 * 1000,
                 });
-                res.status(200).json({ roles, accessToken, user: foundUser.username, image: foundUser.image });
+                res.status(200).json({ roles, accessToken, user: foundUser.username, image: foundUser.image, userID: foundUser._id });
             }
             else {
                 return res.status(400).json({ message: "Wrong password" });

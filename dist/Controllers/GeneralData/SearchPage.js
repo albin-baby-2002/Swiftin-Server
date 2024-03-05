@@ -41,7 +41,7 @@ const hotelDataBySearch = (req, res, next) => __awaiter(void 0, void 0, void 0, 
                 sortBy = 1;
             }
         }
-        let limit = 5;
+        let limit = 4;
         console.log(search, "search");
         let filterQuery = {
             $or: [
@@ -138,7 +138,9 @@ const hotelDataBySearch = (req, res, next) => __awaiter(void 0, void 0, void 0, 
         ]);
         const totalProperties = totalPropertiesMatchingQuery.length;
         const totalPages = Math.ceil(totalProperties / limit);
-        return res.status(200).json({ properties, totalPages, totalHotels: totalProperties });
+        return res
+            .status(200)
+            .json({ properties, totalPages, totalHotels: totalProperties });
     }
     catch (err) {
         console.log(err);

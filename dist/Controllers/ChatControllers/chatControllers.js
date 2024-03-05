@@ -28,6 +28,7 @@ const SearchUsersForChat = (req, res, next) => __awaiter(void 0, void 0, void 0,
                 { username: { $regex: search, $options: "i" } },
                 { email: { $regex: search, $options: "i" } },
             ],
+            "roles.Admin": { $ne: 5150 },
             blocked: false,
             verified: true,
             _id: { $ne: (_a = req.userInfo) === null || _a === void 0 ? void 0 : _a.id },
@@ -94,7 +95,6 @@ const getAllConversationsData = (req, res, next) => __awaiter(void 0, void 0, vo
             .populate({ path: "groupAdmin", select: "username email image" })
             .populate("latestMessage")
             .sort({ updatedAt: -1 });
-        console.log(conversations);
         return res.status(200).json({ conversations, userID: (_e = req.userInfo) === null || _e === void 0 ? void 0 : _e.id });
     }
     catch (err) {

@@ -54,18 +54,19 @@ const JwtVerification_1 = require("./Middlewares/JwtVerification");
 const checkIsUserBlocked_1 = require("./Middlewares/checkIsUserBlocked");
 const chatRoutes_1 = require("./Routes/ChatRoutes/chatRoutes");
 const messageRoute_1 = require("./Routes/MessageRoutes/messageRoute");
+const socket_io_1 = require("socket.io");
 const PORT = process.env.PORT || 3500;
 // connect to mongodb database
 (0, dbConnection_1.default)();
 // access-control-allow-credentials
 app.use((req, res, next) => {
-    console.log(`Requested URL: ${req.url}`);
+    // console.log(`Requested URL: ${req.url}`);
     next();
 });
 app.use(Credentials_1.default);
 app.use((0, cors_1.default)(corsOptions_1.default));
 app.use("/public", express_1.default.static(path_1.default.join(__dirname, "..", "public")));
-console.log(path_1.default.join(__dirname, "..", "public"));
+// console.log(path.join(__dirname, "..", "public"));
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
 app.use("/register", RegisterRoute_1.default);
@@ -75,7 +76,7 @@ app.use("/auth/google", googleAuthRoute_1.default);
 app.use("/refreshToken", checkIsUserBlocked_1.checkIsUserBlocked, RefreshTokenRoute_1.default);
 app.use("/logout", LogoutRoute_1.default);
 app.use("/search", SearchPageRoute_1.default);
-app.use('/listing/', listingRoute_1.default);
+app.use("/listing/", listingRoute_1.default);
 // authenticate users using jwt for private routes
 app.use(JwtVerification_1.verifyJWT);
 app.use("/admin", (0, VerifyRoles_1.default)(allowedRoles_1.default.Admin), AdminRoutes_1.default);
@@ -84,7 +85,7 @@ app.use("/chat", (0, VerifyRoles_1.default)(allowedRoles_1.default.User), chatRo
 app.use("/messages", (0, VerifyRoles_1.default)(allowedRoles_1.default.User), messageRoute_1.messageRouter);
 app.use("/property", (0, VerifyRoles_1.default)(allowedRoles_1.default.User), propertyRoutes_1.default);
 app.use((err, req, res, next) => {
-    return res.status(500).json({ message: 'server facing unexpected errors' });
+    return res.status(500).json({ message: "server facing unexpected errors" });
 });
 // 404 Error Middleware
 app.use("*", (req, res, next) => {
@@ -93,7 +94,47 @@ app.use("*", (req, res, next) => {
 // Error Handler
 // app.use(errorHandler);
 // running the server application
+let server;
 mongoose_1.default.connection.once("open", () => {
     console.log("Connected to MongoDB");
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    const io = new socket_io_1.Server(server, {
+        pingTimeout: 60000,
+        cors: corsOptions_1.default,
+    });
+    io.on("connection", (socket) => {
+        console.log("intial connection from client");
+        socket.on("setup", (userData) => {
+            console.log(userData, "setup");
+            socket.join(userData);
+            socket.emit("connection");
+        });
+        socket.on("disconnect", () => {
+            console.log("Socket disconnected:");
+        });
+        socket.on("join chat", (room) => {
+            socket.join(room);
+            console.log("join chat", room);
+        });
+        socket.on("typing", (room) => {
+            console.log("typing", room);
+            socket.in(room).emit("typing now", { room });
+        });
+        socket.on("stop typing", (room) => {
+            console.log('stop typing');
+            socket.in(room).emit("stop typing", { room });
+        });
+        socket.on("new message", (newMessage) => {
+            let chat = newMessage.chat;
+            console.log(newMessage, "new message \t \t");
+            if (!chat.users)
+                return console.log("chat.users is not defined");
+            chat.users.forEach((user) => {
+                if (user._id === newMessage.sender._id)
+                    return;
+                console.log(user._id, "message send to \t \t ");
+                socket.in(user._id).emit("message recieved", newMessage);
+            });
+        });
+    });
 });

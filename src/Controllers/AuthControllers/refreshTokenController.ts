@@ -61,7 +61,7 @@ const handleRefreshToken = async (
         { expiresIn: "50s" }
       );
 
-      res.json({ roles, accessToken, user: decoded.username ,image:foundUser.image});
+      res.json({ roles, accessToken, user: decoded.username ,image:foundUser.image,userID:decoded.id});
     });
   } catch (err: any) {
     console.log(err);
