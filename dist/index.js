@@ -30,6 +30,7 @@ const express_1 = __importDefault(require("express"));
 const app = (0, express_1.default)();
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 const mongoose_1 = __importDefault(require("mongoose"));
@@ -102,12 +103,31 @@ mongoose_1.default.connection.once("open", () => {
         pingTimeout: 60000,
         cors: corsOptions_1.default,
     });
+    io.use((socket, next) => {
+        const token = socket.handshake.query.token;
+        if (typeof token != "string" || !process.env.ACCESS_TOKEN_SECRET)
+            return next(new Error("token not recieved or failed to get secret to verify accessToken"));
+        ;
+        // Validate JWT token
+        jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+            if (err) {
+                // If JWT token is invalid or expired, send a 403 Forbidden response
+                console.error("JWT validation failed:", err.message);
+                return next(new Error("Unauthorized"));
+            }
+            else {
+                // If JWT token is valid, proceed with the connection
+                console.log("Socket connection authorized:", decoded);
+                return next();
+            }
+        });
+    });
     io.on("connection", (socket) => {
         console.log("intial connection from client");
         socket.on("setup", (userData) => {
             console.log(userData, "setup");
             socket.join(userData);
-            socket.emit("connection");
+            socket.emit("setup complete");
         });
         socket.on("disconnect", () => {
             console.log("Socket disconnected:");
@@ -136,5 +156,16 @@ mongoose_1.default.connection.once("open", () => {
                 socket.in(user._id).emit("message recieved", newMessage);
             });
         });
+    });
+    io.use((socket, next) => {
+        socket.on("error", (error) => {
+            if (error.message === "Unauthorized") {
+                // Send a 403 Forbidden response
+                socket.emit("unauthorized", {
+                    message: "You are not authorized to connect.",
+                });
+            }
+        });
+        next();
     });
 });

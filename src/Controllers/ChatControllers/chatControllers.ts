@@ -37,8 +37,6 @@ export const SearchUsersForChat = async (
     };
 
     const Users = await User.find(query, { username: 1, email: 1, image: 1 });
-    
-    
 
     return res.status(200).json({ Users });
   } catch (err: any) {

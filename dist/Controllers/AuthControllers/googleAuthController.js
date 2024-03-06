@@ -91,7 +91,7 @@ const handleGoogleAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, f
                     username: user.username,
                     roles: roles,
                 },
-            }, ACCESS_SECRET, { expiresIn: "30s" });
+            }, ACCESS_SECRET, { expiresIn: "30m" });
             const refreshToken = jsonwebtoken_1.default.sign({ username: user.username, id: user._id }, REFRESH_SECRET, { expiresIn: "1d" });
             // Saving refreshToken with current user
             user.refreshToken = refreshToken;

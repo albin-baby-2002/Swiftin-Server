@@ -4,6 +4,8 @@ const app = express();
 import * as dotenv from "dotenv";
 dotenv.config();
 
+import jwt from 'jsonwebtoken'
+
 import cors from "cors";
 import path from "path";
 import mongoose from "mongoose";
@@ -139,6 +141,32 @@ mongoose.connection.once("open", () => {
     pingTimeout: 60000,
     cors: corsOptions,
   });
+  
+  io.use((socket, next) => {
+    const token = socket.handshake.query.token;
+    
+    if (typeof token != "string" || !process.env.ACCESS_TOKEN_SECRET)
+      return next(
+        new Error(
+          "token not recieved or failed to get secret to verify accessToken"
+        )
+      );;
+    
+      // Validate JWT token
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          // If JWT token is invalid or expired, send a 403 Forbidden response
+          console.error("JWT validation failed:", err.message);
+          return next(new Error("Unauthorized"));
+        } else {
+          // If JWT token is valid, proceed with the connection
+          console.log("Socket connection authorized:", decoded);
+          return next();
+        }
+      });
+    
+ 
+  });
 
   io.on("connection", (socket): void => {
     console.log("intial connection from client");
@@ -147,7 +175,7 @@ mongoose.connection.once("open", () => {
       console.log(userData, "setup");
 
       socket.join(userData);
-      socket.emit("connection");
+      socket.emit("setup complete");
     });
 
     socket.on("disconnect", () => {
@@ -183,4 +211,17 @@ mongoose.connection.once("open", () => {
       });
     });
   });
+  
+io.use((socket, next) => {
+  socket.on("error", (error) => {
+    if (error.message === "Unauthorized") {
+      // Send a 403 Forbidden response
+      socket.emit("unauthorized", {
+        message: "You are not authorized to connect.",
+      });
+    }
+  });
+  next();
+});
+  
 });

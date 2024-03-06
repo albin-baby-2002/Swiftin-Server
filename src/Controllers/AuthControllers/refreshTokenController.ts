@@ -58,7 +58,7 @@ const handleRefreshToken = async (
           },
         },
         ACCESS_SECRET,
-        { expiresIn: "50s" }
+        { expiresIn: "30m" }
       );
 
       res.json({ roles, accessToken, user: decoded.username ,image:foundUser.image,userID:decoded.id});

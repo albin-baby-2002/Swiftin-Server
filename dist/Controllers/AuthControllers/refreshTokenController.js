@@ -70,7 +70,7 @@ const handleRefreshToken = (req, res, next) => __awaiter(void 0, void 0, void 0,
                     username: decoded.username,
                     roles: roles,
                 },
-            }, ACCESS_SECRET, { expiresIn: "50s" });
+            }, ACCESS_SECRET, { expiresIn: "30m" });
             res.json({ roles, accessToken, user: decoded.username, image: foundUser.image, userID: decoded.id });
         });
     }

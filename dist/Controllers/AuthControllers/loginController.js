@@ -64,7 +64,7 @@ const loginController = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
                         username: foundUser.username,
                         roles: roles,
                     },
-                }, ACCESS_SECRET, { expiresIn: "30s" });
+                }, ACCESS_SECRET, { expiresIn: "30m" });
                 const refreshToken = jsonwebtoken_1.default.sign({ username: foundUser.username, id: foundUser._id }, REFRESH_SECRET, { expiresIn: "1d" });
                 // Saving refreshToken with current user
                 foundUser.refreshToken = refreshToken;

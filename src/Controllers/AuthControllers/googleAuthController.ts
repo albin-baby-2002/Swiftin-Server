@@ -88,7 +88,7 @@ const handleGoogleAuth = async (
           },
         },
         ACCESS_SECRET,
-        { expiresIn: "30s" }
+        { expiresIn: "30m" }
       );
 
       const refreshToken = jwt.sign(
