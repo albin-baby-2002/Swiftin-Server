@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import { HotelListing } from "../../Models/hotelLisitingModal";
 import { z } from "zod";
-
+import jwt from "jsonwebtoken";
 interface SearchQuery {
   search: string;
   page: number;
@@ -20,6 +20,16 @@ interface CustomRequest extends Request {
   };
 }
 
+interface UserInfo {
+  id: string;
+  username: string;
+  roles: number[];
+}
+
+interface DecodedToken {
+  UserInfo: UserInfo;
+}
+
 export const hotelDataBySearch = async (
   req: CustomRequest,
   res: Response,
@@ -27,6 +37,22 @@ export const hotelDataBySearch = async (
 ) => {
   try {
     let queryParams = req.query as unknown as SearchQuery;
+
+    let userID: string | mongoose.Types.ObjectId = "";
+    const authHeader = (req.headers.authorization ||
+      req.headers.Authorization) as string;
+
+    if (authHeader) {
+      const token = authHeader.split(" ")[1];
+
+      if (token) {
+        let userData = jwt.decode(token);
+
+        userID = new mongoose.Types.ObjectId(
+          (userData as DecodedToken).UserInfo.id
+        );
+      }
+    }
 
     let search = "";
 
@@ -65,9 +91,9 @@ export const hotelDataBySearch = async (
       }
     }
 
-    let limit = 4;
+    let limit = 8;
 
-    console.log(search, "search");
+    console.log(userID, "search");
 
     let filterQuery = {
       $or: [
@@ -75,6 +101,7 @@ export const hotelDataBySearch = async (
         { district: { $regex: search, $options: "i" } },
         { city: { $regex: search, $options: "i" } },
       ],
+      hostID: { $ne: userID },
       totalRooms: { $gte: rooms },
       maxGuestsPerRoom: { $gte: guests },
       approvedForReservation: true,
@@ -118,6 +145,7 @@ export const hotelDataBySearch = async (
           approvedForReservation: 1,
           isActiveForReservation: 1,
           rentPerNight: 1,
+          hostID: "$hostData._id",
           hostName: "$hostData.username",
           city: "$addressData.city",
           district: "$addressData.district",

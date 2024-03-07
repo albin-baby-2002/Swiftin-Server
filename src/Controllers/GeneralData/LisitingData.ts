@@ -70,6 +70,7 @@ export const ListingData = async (
           rentPerNight: 1,
           mainImage: 1,
           otherImages: 1,
+          hostID:"$hostData._id",
           host: "$hostData.username",
           hostImg: "$hostData.image",
           hotelName: "$addressData.addressLine",

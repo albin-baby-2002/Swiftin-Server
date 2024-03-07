@@ -63,6 +63,7 @@ const ListingData = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
                     rentPerNight: 1,
                     mainImage: 1,
                     otherImages: 1,
+                    hostID: "$hostData._id",
                     host: "$hostData.username",
                     hostImg: "$hostData.image",
                     hotelName: "$addressData.addressLine",

@@ -8,12 +8,27 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hotelDataBySearch = void 0;
+const mongoose_1 = __importDefault(require("mongoose"));
 const hotelLisitingModal_1 = require("../../Models/hotelLisitingModal");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const hotelDataBySearch = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let queryParams = req.query;
+        let userID = "";
+        const authHeader = (req.headers.authorization ||
+            req.headers.Authorization);
+        if (authHeader) {
+            const token = authHeader.split(" ")[1];
+            if (token) {
+                let userData = jsonwebtoken_1.default.decode(token);
+                userID = new mongoose_1.default.Types.ObjectId(userData.UserInfo.id);
+            }
+        }
         let search = "";
         if (queryParams.search) {
             console.log("yes");
@@ -41,14 +56,15 @@ const hotelDataBySearch = (req, res, next) => __awaiter(void 0, void 0, void 0, 
                 sortBy = 1;
             }
         }
-        let limit = 4;
-        console.log(search, "search");
+        let limit = 8;
+        console.log(userID, "search");
         let filterQuery = {
             $or: [
                 { state: { $regex: search, $options: "i" } },
                 { district: { $regex: search, $options: "i" } },
                 { city: { $regex: search, $options: "i" } },
             ],
+            hostID: { $ne: userID },
             totalRooms: { $gte: rooms },
             maxGuestsPerRoom: { $gte: guests },
             approvedForReservation: true,
@@ -88,6 +104,7 @@ const hotelDataBySearch = (req, res, next) => __awaiter(void 0, void 0, void 0, 
                     approvedForReservation: 1,
                     isActiveForReservation: 1,
                     rentPerNight: 1,
+                    hostID: "$hostData._id",
                     hostName: "$hostData.username",
                     city: "$addressData.city",
                     district: "$addressData.district",
