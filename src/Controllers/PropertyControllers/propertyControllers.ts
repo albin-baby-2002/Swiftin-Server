@@ -10,6 +10,7 @@ import Razorpay from "razorpay";
 import { RazorPayDetails } from "../../Models/razorPayDetailsModal";
 import { ListingData } from "../GeneralData/LisitingData";
 import { User } from "../../Models/userModel";
+import { Review } from "../../Models/reviewModel";
 
 const HotelListingSchema = z.object({
   addressLine: z.string().min(3, " Min length For address is 3").max(20),
@@ -972,11 +973,76 @@ export const getWishlistData = async (
       return res.status(400).json({ message: "failed to identify user " });
     }
 
-    const userData = await User.findById(userID);
+    const wishLists = await User.aggregate([
+      {
+        $match: {
+          _id: userID,
+        },
+      },
+      {
+        $project: {
+          wishlist: 1,
+        },
+      },
+      {
+        $lookup: {
+          from: "hotellistings",
+          localField: "wishlist",
+          foreignField: "_id",
+          as: "wishlistData",
+        },
+      },
 
-    return res.status(200).json({
-      wishlist: userData?.wishlist,
-    });
+      {
+        $project: {
+          wishlistData: 1,
+          hasValue: {
+            $cond: {
+              if: { $eq: [{ $size: "$wishlistData" }, 0] },
+              then: false,
+              else: true,
+            },
+          },
+        },
+      },
+
+      {
+        $match: { hasValue: true },
+      },
+      {
+        $unwind: { path: "$wishlistData", preserveNullAndEmptyArrays: true },
+      },
+
+      {
+        $replaceRoot: {
+          newRoot: "$wishlistData",
+        },
+      },
+
+      {
+        $lookup: {
+          from: "hoteladdresses",
+          localField: "address",
+          foreignField: "_id",
+          as: "addressData",
+        },
+      },
+
+      {
+        $unwind: { path: "$addressData", preserveNullAndEmptyArrays: true },
+      },
+
+      {
+        $project: {
+          mainImage: 1,
+          hotelName: "$addressData.addressLine",
+        },
+      },
+    ]);
+
+    console.log(wishLists);
+
+    return res.status(200).json({ wishLists });
   } catch (err: any) {
     console.log(err);
 
@@ -1094,6 +1160,82 @@ export const removeFromWishlist = async (
     return res.status(200).json({
       message: "successfully removed from wishlist",
     });
+  } catch (err: any) {
+    console.log(err);
+
+    next(err);
+  }
+};
+
+export const addReview = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
+
+    if (!userID) {
+      return res.status(400).json({ message: "failed to identify user " });
+    }
+
+    let listingID = new mongoose.Types.ObjectId(req.params.listingID);
+
+    const userData = await User.findById(userID);
+
+    if (!listingID) {
+      return res.status(400).json({
+        message: "Failed to identify  the listingID. Try Again ",
+      });
+    }
+
+    let listingData = await HotelListing.findById(listingID);
+
+    if (!listingData)
+      return res.status(400).json({ message: "failed to identify listing " });
+
+    const { rating, reviewMessage } = req.body;
+
+    if (!rating || !reviewMessage) {
+      return res.status(400).json({ message: "All fields are mandatory " });
+    }
+
+    if (rating < 1 || rating > 5) {
+      return res
+        .status(400)
+        .json({ message: "Rating value should be between 1 and 5 " });
+    }
+
+    const existingReview = await Review.find({ userID, listingID });
+
+    if (existingReview.length >= 1) {
+      return res
+        .status(400)
+        .json({ message: "You already made a review on this property " });
+    }
+
+    let AvgRating = listingData.AvgRating;
+
+    let totalReviews = listingData.reviews.length;
+
+    AvgRating = (AvgRating * totalReviews + rating) / (totalReviews + 1);
+
+    const review = new Review({
+      userID,
+      listingID,
+      rating,
+      reviewMessage,
+    });
+
+    await review.save();
+
+    const updatedListing = await HotelListing.findByIdAndUpdate(listingID, {
+      AvgRating,
+      $push: { reviews: review._id },
+    });
+
+    console.log(updatedListing);
+    return res.status(200).json({ message: "review added" });
   } catch (err: any) {
     console.log(err);
 

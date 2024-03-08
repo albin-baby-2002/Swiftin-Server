@@ -81,7 +81,7 @@ const UserSchema = new mongoose.Schema<User>({
   wishlist: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "HotelListings",
+      ref: "HotelListing",
     },
   ],
 });

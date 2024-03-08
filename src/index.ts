@@ -109,9 +109,9 @@ app.use(verifyJWT);
 
 app.use("/admin", verifyRoles(ROLES_LIST.Admin), adminRoutes);
 app.use("/user", checkIsUserBlocked, verifyRoles(ROLES_LIST.User), userRoutes);
-app.use("/chat", verifyRoles(ROLES_LIST.User), chatRouter);
-app.use("/messages", verifyRoles(ROLES_LIST.User), messageRouter);
-app.use("/property", verifyRoles(ROLES_LIST.User), propertyRoutes);
+app.use("/chat",  checkIsUserBlocked, verifyRoles(ROLES_LIST.User), chatRouter);
+app.use("/messages",  checkIsUserBlocked, verifyRoles(ROLES_LIST.User), messageRouter);
+app.use("/property",  checkIsUserBlocked , verifyRoles(ROLES_LIST.User), propertyRoutes);
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   return res.status(500).json({ message: "server facing unexpected errors" });

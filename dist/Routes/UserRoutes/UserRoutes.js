@@ -23,6 +23,7 @@ router.patch("/listings/deactivate/:listingID", listingsController_1.deActivateL
 router.get("/listing/wishlist/", propertyControllers_1.getWishlistData);
 router.patch("/listing/wishlist/add/:listingID", propertyControllers_1.AddToWishlist);
 router.patch("/listing/wishlist/remove/:listingID", propertyControllers_1.removeFromWishlist);
+router.post("/listing/review/add/:listingID", propertyControllers_1.addReview);
 // edit images of hosting listed by user
 router.patch("/listing/images/:listingID", listingsController_1.editListingImagesHandler);
 // get and modify address of listings hosted by user

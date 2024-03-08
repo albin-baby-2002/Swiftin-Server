@@ -15,13 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ListingData = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const hotelLisitingModal_1 = require("../../Models/hotelLisitingModal");
+const reviewModel_1 = require("../../Models/reviewModel");
 const ListingData = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const listingID = new mongoose_1.default.Types.ObjectId(req.params.listingID);
         if (!listingID) {
             return res.status(400).json({ message: "failed to identify listing " });
         }
-        console.log(listingID, "listingID");
         let filterQuery = { _id: listingID };
         const listing = yield hotelLisitingModal_1.HotelListing.aggregate([
             {
@@ -74,8 +74,37 @@ const ListingData = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
                 },
             },
         ]);
+        const reviewData = yield reviewModel_1.Review.aggregate([
+            {
+                $match: {
+                    listingID: listingID,
+                },
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "userID",
+                    foreignField: "_id",
+                    as: "userData",
+                },
+            },
+            {
+                $unwind: { path: "$userData", preserveNullAndEmptyArrays: true },
+            },
+            {
+                $project: {
+                    userID: 1,
+                    listingID: 1,
+                    rating: 1,
+                    reviewMessage: 1,
+                    username: "$userData.username",
+                    image: "$userData.image"
+                }
+            }
+        ]);
+        console.log(reviewData, "review \t \t \t");
         console.log(listing, "get single listing");
-        return res.status(200).json({ listing: listing[0] });
+        return res.status(200).json({ listing: listing[0], reviewData });
     }
     catch (err) {
         console.log(err);

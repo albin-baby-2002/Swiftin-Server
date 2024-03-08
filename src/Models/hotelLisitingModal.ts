@@ -83,10 +83,21 @@ const HotelListingSchema = new mongoose.Schema({
       ref: "HotelReservation",
     },
   ],
-  
-  dateWiseReservationData:{
-    type:Object
-  }
+
+  reviews: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Review",
+    },
+  ],
+  AvgRating: {
+    type:Number,
+    default:0
+  },
+
+  dateWiseReservationData: {
+    type: Object,
+  },
 });
 
 export const HotelListing = mongoose.model("HotelListing", HotelListingSchema);

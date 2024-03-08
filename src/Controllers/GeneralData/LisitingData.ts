@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 
 import mongoose from "mongoose";
 import { HotelListing } from "../../Models/hotelLisitingModal";
+import { Review } from "../../Models/reviewModel";
 
 interface CustomRequest extends Request {
   userInfo?: {
@@ -22,8 +23,6 @@ export const ListingData = async (
     if (!listingID) {
       return res.status(400).json({ message: "failed to identify listing " });
     }
-
-    console.log(listingID, "listingID");
 
     let filterQuery = { _id: listingID };
 
@@ -56,6 +55,7 @@ export const ListingData = async (
       {
         $unwind: { path: "$hostData", preserveNullAndEmptyArrays: true },
       },
+
       {
         $project: {
           userID: 1,
@@ -70,7 +70,7 @@ export const ListingData = async (
           rentPerNight: 1,
           mainImage: 1,
           otherImages: 1,
-          hostID:"$hostData._id",
+          hostID: "$hostData._id",
           host: "$hostData.username",
           hostImg: "$hostData.image",
           hotelName: "$addressData.addressLine",
@@ -82,9 +82,40 @@ export const ListingData = async (
       },
     ]);
 
+    const reviewData = await Review.aggregate([
+      {
+        $match: {
+          listingID: listingID,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userID",
+          foreignField: "_id",
+          as: "userData",
+        },
+      },
+      {
+        $unwind: { path: "$userData", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $project:{
+          userID:1,
+          listingID:1,
+          rating:1,
+          reviewMessage:1,
+          username:"$userData.username",
+          image:"$userData.image"
+        }
+      }
+    ]);
+
+    console.log(reviewData, "review \t \t \t");
+
     console.log(listing, "get single listing");
 
-    return res.status(200).json({ listing: listing[0] });
+    return res.status(200).json({ listing: listing[0] ,reviewData});
   } catch (err: any) {
     console.log(err);
 

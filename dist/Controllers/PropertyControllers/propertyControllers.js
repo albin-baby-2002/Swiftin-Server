@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeFromWishlist = exports.AddToWishlist = exports.getWishlistData = exports.hostCancelReservation = exports.getAllListingsReservations = exports.cancelReservationHandler = exports.getAllUserBookings = exports.validatePaymentAndCompleteReservation = exports.createReservationOrderHandler = exports.checkAvailability = exports.listPropertyHandler = void 0;
+exports.addReview = exports.removeFromWishlist = exports.AddToWishlist = exports.getWishlistData = exports.hostCancelReservation = exports.getAllListingsReservations = exports.cancelReservationHandler = exports.getAllUserBookings = exports.validatePaymentAndCompleteReservation = exports.createReservationOrderHandler = exports.checkAvailability = exports.listPropertyHandler = void 0;
 const zod_1 = require("zod");
 const hotelAddressModel_1 = require("../../Models/hotelAddressModel");
 const hotelLisitingModal_1 = require("../../Models/hotelLisitingModal");
@@ -21,6 +21,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const razorpay_1 = __importDefault(require("razorpay"));
 const razorPayDetailsModal_1 = require("../../Models/razorPayDetailsModal");
 const userModel_1 = require("../../Models/userModel");
+const reviewModel_1 = require("../../Models/reviewModel");
 const HotelListingSchema = zod_1.z.object({
     addressLine: zod_1.z.string().min(3, " Min length For address is 3").max(20),
     city: zod_1.z.string().min(3, " Min length For city is 3").max(15),
@@ -683,10 +684,68 @@ const getWishlistData = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         if (!userID) {
             return res.status(400).json({ message: "failed to identify user " });
         }
-        const userData = yield userModel_1.User.findById(userID);
-        return res.status(200).json({
-            wishlist: userData === null || userData === void 0 ? void 0 : userData.wishlist,
-        });
+        const wishLists = yield userModel_1.User.aggregate([
+            {
+                $match: {
+                    _id: userID,
+                },
+            },
+            {
+                $project: {
+                    wishlist: 1,
+                },
+            },
+            {
+                $lookup: {
+                    from: "hotellistings",
+                    localField: "wishlist",
+                    foreignField: "_id",
+                    as: "wishlistData",
+                },
+            },
+            {
+                $project: {
+                    wishlistData: 1,
+                    hasValue: {
+                        $cond: {
+                            if: { $eq: [{ $size: "$wishlistData" }, 0] },
+                            then: false,
+                            else: true,
+                        },
+                    },
+                },
+            },
+            {
+                $match: { hasValue: true },
+            },
+            {
+                $unwind: { path: "$wishlistData", preserveNullAndEmptyArrays: true },
+            },
+            {
+                $replaceRoot: {
+                    newRoot: "$wishlistData",
+                },
+            },
+            {
+                $lookup: {
+                    from: "hoteladdresses",
+                    localField: "address",
+                    foreignField: "_id",
+                    as: "addressData",
+                },
+            },
+            {
+                $unwind: { path: "$addressData", preserveNullAndEmptyArrays: true },
+            },
+            {
+                $project: {
+                    mainImage: 1,
+                    hotelName: "$addressData.addressLine",
+                },
+            },
+        ]);
+        console.log(wishLists);
+        return res.status(200).json({ wishLists });
     }
     catch (err) {
         console.log(err);
@@ -774,3 +833,58 @@ const removeFromWishlist = (req, res, next) => __awaiter(void 0, void 0, void 0,
     }
 });
 exports.removeFromWishlist = removeFromWishlist;
+const addReview = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _m;
+    try {
+        const userID = new mongoose_1.default.Types.ObjectId((_m = req.userInfo) === null || _m === void 0 ? void 0 : _m.id);
+        if (!userID) {
+            return res.status(400).json({ message: "failed to identify user " });
+        }
+        let listingID = new mongoose_1.default.Types.ObjectId(req.params.listingID);
+        const userData = yield userModel_1.User.findById(userID);
+        if (!listingID) {
+            return res.status(400).json({
+                message: "Failed to identify  the listingID. Try Again ",
+            });
+        }
+        let listingData = yield hotelLisitingModal_1.HotelListing.findById(listingID);
+        if (!listingData)
+            return res.status(400).json({ message: "failed to identify listing " });
+        const { rating, reviewMessage } = req.body;
+        if (!rating || !reviewMessage) {
+            return res.status(400).json({ message: "All fields are mandatory " });
+        }
+        if (rating < 1 || rating > 5) {
+            return res
+                .status(400)
+                .json({ message: "Rating value should be between 1 and 5 " });
+        }
+        const existingReview = yield reviewModel_1.Review.find({ userID, listingID });
+        if (existingReview.length >= 1) {
+            return res
+                .status(400)
+                .json({ message: "You already made a review on this property " });
+        }
+        let AvgRating = listingData.AvgRating;
+        let totalReviews = listingData.reviews.length;
+        AvgRating = (AvgRating * totalReviews + rating) / (totalReviews + 1);
+        const review = new reviewModel_1.Review({
+            userID,
+            listingID,
+            rating,
+            reviewMessage,
+        });
+        yield review.save();
+        const updatedListing = yield hotelLisitingModal_1.HotelListing.findByIdAndUpdate(listingID, {
+            AvgRating,
+            $push: { reviews: review._id },
+        });
+        console.log(updatedListing);
+        return res.status(200).json({ message: "review added" });
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+});
+exports.addReview = addReview;

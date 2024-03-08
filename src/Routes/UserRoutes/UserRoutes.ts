@@ -17,6 +17,7 @@ import {
 } from "../../Controllers/UserControllers/listingsController";
 import {
   AddToWishlist,
+  addReview,
   cancelReservationHandler,
   checkAvailability,
   createReservationOrderHandler,
@@ -55,6 +56,8 @@ router.patch("/listings/deactivate/:listingID", deActivateListing);
 router.get("/listing/wishlist/", getWishlistData);
 router.patch("/listing/wishlist/add/:listingID", AddToWishlist);
 router.patch("/listing/wishlist/remove/:listingID", removeFromWishlist);
+
+router.post("/listing/review/add/:listingID",addReview)
 
 // edit images of hosting listed by user
 
