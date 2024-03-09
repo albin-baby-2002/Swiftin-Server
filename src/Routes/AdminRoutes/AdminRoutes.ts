@@ -13,6 +13,7 @@ import {
   disapproveListing,
   getAllListings,
 } from "../../Controllers/AdminControllers/listingsManagement";
+import { getAllReservations } from "../../Controllers/AdminControllers/getReservations";
 
 const router = express.Router();
 
@@ -28,5 +29,7 @@ router.patch("/user/unblock/:userID", unBlockUserHandler);
 router.get("/listings", getAllListings);
 router.patch("/listings/approve/:listingID", approveListing);
 router.patch("/listings/disapprove/:listingID",disapproveListing );
+
+router.get("/reservations",getAllReservations)
 
 export default router;
