@@ -142,11 +142,11 @@ export const getAllReservations = async (
 
           hotelName: "$addressData.addressLine",
         },
+        
       },
       {
         $match: filterQuery,
       },
-      
     ]);
 
     const totalReservations = totalReservationMatchingQuery.length;

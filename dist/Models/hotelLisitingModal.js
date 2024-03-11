@@ -94,10 +94,12 @@ const HotelListingSchema = new mongoose_1.default.Schema({
     ],
     AvgRating: {
         type: Number,
-        default: 0
+        default: 0,
     },
     dateWiseReservationData: {
         type: Object,
     },
+}, {
+    timestamps: true,
 });
 exports.HotelListing = mongoose_1.default.model("HotelListing", HotelListingSchema);

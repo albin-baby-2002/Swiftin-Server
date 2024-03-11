@@ -14,6 +14,7 @@ import {
   getAllListings,
 } from "../../Controllers/AdminControllers/listingsManagement";
 import { getAllReservations } from "../../Controllers/AdminControllers/getReservations";
+import { getChartData, getConsoleData } from "../../Controllers/AdminControllers/console";
 
 const router = express.Router();
 
@@ -30,6 +31,9 @@ router.get("/listings", getAllListings);
 router.patch("/listings/approve/:listingID", approveListing);
 router.patch("/listings/disapprove/:listingID",disapproveListing );
 
-router.get("/reservations",getAllReservations)
+router.get("/reservations",getAllReservations);
+
+router.get("/console",getConsoleData)
+router.get("/charts",getChartData)
 
 export default router;
