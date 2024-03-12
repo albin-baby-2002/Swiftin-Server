@@ -11,10 +11,11 @@ import {
 import {
   approveListing,
   disapproveListing,
+  getAllHosts,
   getAllListings,
 } from "../../Controllers/AdminControllers/listingsManagement";
 import { getAllReservations } from "../../Controllers/AdminControllers/getReservations";
-import { getChartData, getConsoleData } from "../../Controllers/AdminControllers/console";
+import { getCardData, getChartData } from "../../Controllers/AdminControllers/console";
 
 const router = express.Router();
 
@@ -32,8 +33,9 @@ router.patch("/listings/approve/:listingID", approveListing);
 router.patch("/listings/disapprove/:listingID",disapproveListing );
 
 router.get("/reservations",getAllReservations);
+router.get("/hosts",getAllHosts);
 
-router.get("/console",getConsoleData)
+router.get("/console",getCardData)
 router.get("/charts",getChartData)
 
 export default router;

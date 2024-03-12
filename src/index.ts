@@ -77,7 +77,7 @@ connectDB();
 
 // access-control-allow-credentials
 app.use((req, res, next) => {
-  // console.log(`Requested URL: ${req.url}`);
+  console.log(`Requested URL: ${req.url}`);
   next();
 });
 

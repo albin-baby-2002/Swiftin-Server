@@ -9,11 +9,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getChartData = exports.getConsoleData = void 0;
+exports.getChartData = exports.getCardData = void 0;
 const userModel_1 = require("../../Models/userModel");
 const hotelLisitingModal_1 = require("../../Models/hotelLisitingModal");
 const reservationModal_1 = require("../../Models/reservationModal");
-const getConsoleData = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const getCardData = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const users = yield userModel_1.User.find().countDocuments();
         const hosts = yield hotelLisitingModal_1.HotelListing.aggregate([
@@ -37,23 +37,49 @@ const getConsoleData = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         next(err);
     }
 });
-exports.getConsoleData = getConsoleData;
+exports.getCardData = getCardData;
 const getChartData = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let timeBasisForusersChart = req.query.usersChart;
+        let timeBasisForusersChart = "daily";
+        let timeBasisForListingsChart = "daily";
+        let timeBasisForReservationsChart = "daily";
+        if (req.query.usersChart &&
+            (req.query.usersChart === "daily" ||
+                req.query.usersChart === "weekly" ||
+                req.query.usersChart === "yearly")) {
+            timeBasisForusersChart = req.query.usersChart;
+        }
+        if (req.query.listingsChart &&
+            (req.query.listingsChart === "daily" ||
+                req.query.listingsChart === "weekly" ||
+                req.query.listingsChart === "yearly")) {
+            timeBasisForListingsChart = req.query.listingsChart;
+        }
+        if (req.query.reservationsChart &&
+            (req.query.reservationsChart === "daily" ||
+                req.query.reservationsChart === "weekly" ||
+                req.query.reservationsChart === "yearly")) {
+            timeBasisForReservationsChart = req.query.reservationsChart;
+        }
+        let fieldToQuery = {
+            users: "joinedDate",
+            listings: "createdAt",
+            reservations: "dateOfTransaction",
+        };
         function getDatesAndQueryData(timeBaseForChart, chartType) {
             let startDate, endDate;
-            let groupingQuery, sortQuery;
+            let groupingQuery = {};
+            let sortQuery;
             if (timeBaseForChart === "yearly") {
                 startDate = new Date(new Date().getFullYear(), 0, 1);
                 endDate = new Date(new Date().getFullYear(), 11, 31, 23, 59, 59, 999);
                 groupingQuery = {
                     _id: {
-                        month: { $month: { $toDate: "$joinedDate" } },
-                        year: { $year: { $toDate: "$joinedDate" } },
+                        month: { $month: { $toDate: `$${fieldToQuery[chartType]}` } },
+                        year: { $year: { $toDate: `$${fieldToQuery[chartType]}` } },
                     },
-                    users: { $sum: 1 },
                 };
+                groupingQuery[chartType] = { $sum: 1 };
                 sortQuery = { "_id.year": 1, "_id.month": 1 };
             }
             if (timeBaseForChart === "weekly") {
@@ -68,10 +94,13 @@ const getChartData = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
                 endDate.setUTCMinutes(endDate.getUTCMinutes() + timezoneOffset);
                 groupingQuery = {
                     _id: {
-                        $dateToString: { format: "%Y-%m-%d", date: "$joinedDate" },
+                        $dateToString: {
+                            format: "%Y-%m-%d",
+                            date: `$${fieldToQuery[chartType]}`,
+                        },
                     },
-                    users: { $sum: 1 },
                 };
+                groupingQuery[chartType] = { $sum: 1 };
                 sortQuery = { _id: 1 };
             }
             if (timeBaseForChart === "daily") {
@@ -84,23 +113,17 @@ const getChartData = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
                 startDate.setUTCMinutes(startDate.getUTCMinutes() + timezoneOffset);
                 endDate.setUTCMinutes(endDate.getUTCMinutes() + timezoneOffset);
                 groupingQuery = {
-                    _id: { $hour: "$joinedDate" },
-                    users: { $sum: 1 },
+                    _id: { $hour: `$${fieldToQuery[chartType]}` },
                 };
+                groupingQuery[chartType] = { $sum: 1 };
                 sortQuery = { "_id.hour": 1 };
             }
-            if (chartType === "user") {
-                return { groupingQuery, sortQuery, startDate, endDate };
-            }
-            //   } else if (chartType === "orderType") {
-            //     return { startDate, endDate };
-            //   } else if (chartType === "categoryBasedChart") {
-            //     return { startDate, endDate };
-            //   } else if (chartType === "orderNoChart") {
-            //     return { groupingQuery, sortQuery, startDate, endDate };
-            //   }
+            return { groupingQuery, sortQuery, startDate, endDate };
         }
-        const usersChartInfo = getDatesAndQueryData(timeBasisForusersChart, "user");
+        const usersChartInfo = getDatesAndQueryData(timeBasisForusersChart, "users");
+        const listingsChartInfo = getDatesAndQueryData(timeBasisForListingsChart, "listings");
+        const reservationsChartInfo = getDatesAndQueryData(timeBasisForReservationsChart, "reservations");
+        console.log(reservationsChartInfo === null || reservationsChartInfo === void 0 ? void 0 : reservationsChartInfo.groupingQuery, "QUERY");
         let usersChartData = yield userModel_1.User.aggregate([
             {
                 $match: {
@@ -112,12 +135,46 @@ const getChartData = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
             },
             {
                 $group: usersChartInfo === null || usersChartInfo === void 0 ? void 0 : usersChartInfo.groupingQuery,
-            }, {
-                $sort: usersChartInfo === null || usersChartInfo === void 0 ? void 0 : usersChartInfo.sortQuery
-            }
+            },
+            {
+                $sort: usersChartInfo === null || usersChartInfo === void 0 ? void 0 : usersChartInfo.sortQuery,
+            },
         ]);
-        console.log(usersChartData);
-        return res.status(200).json({ usersChartData });
+        const listingsChartData = yield hotelLisitingModal_1.HotelListing.aggregate([
+            {
+                $match: {
+                    createdAt: {
+                        $gte: listingsChartInfo === null || listingsChartInfo === void 0 ? void 0 : listingsChartInfo.startDate,
+                        $lte: listingsChartInfo === null || listingsChartInfo === void 0 ? void 0 : listingsChartInfo.endDate,
+                    },
+                },
+            },
+            {
+                $group: listingsChartInfo === null || listingsChartInfo === void 0 ? void 0 : listingsChartInfo.groupingQuery,
+            },
+            {
+                $sort: listingsChartInfo === null || listingsChartInfo === void 0 ? void 0 : listingsChartInfo.sortQuery,
+            },
+        ]);
+        const reservationsChartData = yield reservationModal_1.HotelReservation.aggregate([
+            {
+                $match: {
+                    dateOfTransaction: {
+                        $gte: reservationsChartInfo === null || reservationsChartInfo === void 0 ? void 0 : reservationsChartInfo.startDate,
+                        $lte: reservationsChartInfo === null || reservationsChartInfo === void 0 ? void 0 : reservationsChartInfo.endDate,
+                    },
+                    reservationStatus: "success"
+                },
+            },
+            {
+                $group: reservationsChartInfo === null || reservationsChartInfo === void 0 ? void 0 : reservationsChartInfo.groupingQuery,
+            },
+            {
+                $sort: reservationsChartInfo === null || reservationsChartInfo === void 0 ? void 0 : reservationsChartInfo.sortQuery,
+            },
+        ]);
+        console.log(reservationsChartData);
+        return res.status(200).json({ usersChartData, listingsChartData, reservationsChartData });
     }
     catch (err) {
         console.log(err);

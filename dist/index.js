@@ -61,7 +61,7 @@ const PORT = process.env.PORT || 3500;
 (0, dbConnection_1.default)();
 // access-control-allow-credentials
 app.use((req, res, next) => {
-    // console.log(`Requested URL: ${req.url}`);
+    console.log(`Requested URL: ${req.url}`);
     next();
 });
 app.use(Credentials_1.default);

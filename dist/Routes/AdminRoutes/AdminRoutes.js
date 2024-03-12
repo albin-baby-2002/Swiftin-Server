@@ -19,6 +19,7 @@ router.get("/listings", listingsManagement_1.getAllListings);
 router.patch("/listings/approve/:listingID", listingsManagement_1.approveListing);
 router.patch("/listings/disapprove/:listingID", listingsManagement_1.disapproveListing);
 router.get("/reservations", getReservations_1.getAllReservations);
-router.get("/console", console_1.getConsoleData);
+router.get("/hosts", listingsManagement_1.getAllHosts);
+router.get("/console", console_1.getCardData);
 router.get("/charts", console_1.getChartData);
 exports.default = router;

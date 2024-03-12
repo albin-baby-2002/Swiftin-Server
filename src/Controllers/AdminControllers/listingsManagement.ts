@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import { HotelListing } from "../../Models/hotelLisitingModal";
 
-interface GetListingsQuery {
+interface GetQuery {
   search: string;
   page: number;
 }
@@ -14,7 +14,7 @@ export const getAllListings = async (
   next: NextFunction
 ) => {
   try {
-    let queryParams = req.query as unknown as GetListingsQuery;
+    let queryParams = req.query as unknown as GetQuery;
 
     let search = "";
 
@@ -175,6 +175,90 @@ export const disapproveListing = async (
     }
 
     throw new Error("failed to get listing data ");
+  } catch (err: any) {
+    console.log(err);
+
+    next(err);
+  }
+};
+
+export const getAllHosts = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    let queryParams = req.query as unknown as GetQuery;
+
+    let search = "";
+
+    if (queryParams.search) {
+      search = queryParams.search.trim();
+    }
+
+    let page = 1;
+
+    if (Number(queryParams.page)) {
+      page = Number(queryParams.page);
+    }
+
+    let limit = 5;
+
+    let filterQuery = { username: {} };
+
+    filterQuery.username = { $regex: search, $options: "i" };
+
+    const hosts = await HotelListing.aggregate([
+      {
+        $group: { _id: "$userID", listings: { $sum: 1 } },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "userData",
+        },
+      },
+      {
+        $unwind: { path: "$userData", preserveNullAndEmptyArrays: true },
+      },
+
+      {
+        $project: {
+          username: "$userData.username",
+          email: "$userData.email",
+          blocked: "$userData.blocked",
+          joinedDate: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$userData.joinedDate",
+            },
+          },
+          listings: 1,
+        },
+      },
+      {
+        $skip: (page - 1) * limit,
+      },
+      {
+        $limit: limit,
+      },
+    ]);
+
+    console.log(hosts);
+
+    const totalHosts = await HotelListing.aggregate([
+      {
+        $group: { _id: "$userID", listings: { $sum: 1 } },
+      },
+    ]);
+
+    const total = totalHosts.length;
+
+    const totalPages = Math.ceil(total / limit);
+
+    return res.status(200).json({ hosts, totalPages });
   } catch (err: any) {
     console.log(err);
 
