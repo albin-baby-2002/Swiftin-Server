@@ -1,20 +1,16 @@
 import { NextFunction, Request, Response } from "express";
-
-import { HotelListing } from "../../Models/hotelLisitingModal";
 import { HotelReservation } from "../../Models/reservationModal";
+import { TGetReqQuery } from "../../Types/getReqQueryType";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
 
-interface GetReservationsQuery {
-  search: string;
-  page: number;
-}
 
-export const getAllReservations = async (
+export const getAllReservationsHandler = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    let queryParams = req.query as unknown as GetReservationsQuery;
+    let queryParams = req.query as unknown as TGetReqQuery;
 
     let search = "";
 
@@ -34,7 +30,6 @@ export const getAllReservations = async (
 
     filterQuery.hotelName = { $regex: search, $options: "i" };
 
-    console.log(" page number ", page);
 
     const reservations = await HotelReservation.aggregate([
       {
@@ -101,7 +96,7 @@ export const getAllReservations = async (
       },
     ]);
 
-    // console.log("\t \t \t \t", properties, "get properties");
+   
 
     const totalReservationMatchingQuery = await HotelReservation.aggregate([
       {
@@ -142,7 +137,6 @@ export const getAllReservations = async (
 
           hotelName: "$addressData.addressLine",
         },
-        
       },
       {
         $match: filterQuery,
@@ -153,8 +147,8 @@ export const getAllReservations = async (
 
     const totalPages = Math.ceil(totalReservations / limit);
 
-    return res.status(200).json({ reservations, totalPages });
-  } catch (err: any) {
+    return res.status(HTTP_STATUS_CODES.OK).json({ reservations, totalPages });
+  } catch (err) {
     console.log(err);
 
     next(err);

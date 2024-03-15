@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { PersonalAddress } from "../../Models/personalAddress";
 import mongoose, { ObjectId } from "mongoose";
 import { User } from "../../Models/userModel";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
 
 interface CustomRequest extends Request {
   userInfo?: {
@@ -18,12 +19,11 @@ export const getProfileInfo = async (
 ) => {
   try {
     if (!req.userInfo?.id) {
-      return res.status(400).json({ message: "failed to load user data" });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to load user data" });
     }
 
     let userID = new mongoose.Types.ObjectId(req.userInfo.id);
 
-    console.log(userID);
 
     const userData = await User.aggregate([
       {
@@ -62,10 +62,9 @@ export const getProfileInfo = async (
       },
     ]);
 
-    console.log(userData);
 
-    return res.status(200).json({ userData: userData[0] });
-  } catch (err: any) {
+    return res.status(HTTP_STATUS_CODES.OK).json({ userData: userData[0] });
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -81,7 +80,7 @@ export const editProfileHandler = async (
     const userID = req.userInfo?.id;
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify user " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify user " });
     }
 
     const {
@@ -97,7 +96,6 @@ export const editProfileHandler = async (
       pinCode,
     } = req.body;
 
-    console.log(req.body);
 
     const user = await User.findById(userID);
 
@@ -126,7 +124,7 @@ export const editProfileHandler = async (
 
         await user.save();
 
-        return res.sendStatus(200);
+        return res.sendStatus(HTTP_STATUS_CODES.OK);
       }
 
       const address = await PersonalAddress.findByIdAndUpdate(user.address, {
@@ -139,10 +137,9 @@ export const editProfileHandler = async (
         pinCode,
       });
 
-      console.log("success");
-      return res.sendStatus(200);
+      return res.sendStatus(HTTP_STATUS_CODES.OK);
     }
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -158,12 +155,11 @@ export const profileImgChangeHandler = async (
     const userID = req.userInfo?.id;
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify user " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify user " });
     }
 
     const { publicID } = req.body;
 
-    console.log(req.body, "img upload ");
 
     const user = await User.findById(userID);
 
@@ -172,9 +168,9 @@ export const profileImgChangeHandler = async (
 
       await user.save();
 
-      return res.sendStatus(200);
+      return res.sendStatus(HTTP_STATUS_CODES.OK);
     }
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);

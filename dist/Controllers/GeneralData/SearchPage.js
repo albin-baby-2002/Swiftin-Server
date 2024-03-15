@@ -12,11 +12,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.hotelDataBySearch = void 0;
+exports.listingsDataBySearchHandler = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const hotelLisitingModal_1 = require("../../Models/hotelLisitingModal");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const hotelDataBySearch = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const statusCodes_1 = require("../../Enums/statusCodes");
+const listingsDataBySearchHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let queryParams = req.query;
         let userID = "";
@@ -31,7 +32,6 @@ const hotelDataBySearch = (req, res, next) => __awaiter(void 0, void 0, void 0, 
         }
         let search = "";
         if (queryParams.search) {
-            console.log("yes");
             search = queryParams.search.trim();
         }
         let page = 1;
@@ -57,7 +57,6 @@ const hotelDataBySearch = (req, res, next) => __awaiter(void 0, void 0, void 0, 
             }
         }
         let limit = 8;
-        console.log(userID, "search");
         let filterQuery = {
             $or: [
                 { state: { $regex: search, $options: "i" } },
@@ -156,7 +155,7 @@ const hotelDataBySearch = (req, res, next) => __awaiter(void 0, void 0, void 0, 
         const totalProperties = totalPropertiesMatchingQuery.length;
         const totalPages = Math.ceil(totalProperties / limit);
         return res
-            .status(200)
+            .status(statusCodes_1.HTTP_STATUS_CODES.OK)
             .json({ properties, totalPages, totalHotels: totalProperties });
     }
     catch (err) {
@@ -164,4 +163,4 @@ const hotelDataBySearch = (req, res, next) => __awaiter(void 0, void 0, void 0, 
         next(err);
     }
 });
-exports.hotelDataBySearch = hotelDataBySearch;
+exports.listingsDataBySearchHandler = listingsDataBySearchHandler;

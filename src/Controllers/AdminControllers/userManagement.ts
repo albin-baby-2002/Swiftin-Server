@@ -4,55 +4,19 @@ import mongoose from "mongoose";
 import { ZodError, z } from "zod";
 import bcrypt from "bcrypt";
 import { User } from "../../Models/userModel";
+import { TGetReqQuery } from "../../Types/getReqQueryType";
+import { AddUserSchema } from "../../Schemas/addUserSchema";
+import { EditUserSchema } from "../../Schemas/editUserSchema";
+import { HttpStatusCode } from "axios";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
 
-interface GetUsersQuery {
-  search: string;
-  page: number;
-}
-
-const AddUserSchema = z.object({
-  email: z.string().email("Enter a valid email"),
-  username: z.string().min(5, "user name should have min 5 character"),
-  phone: z
-    .string()
-    .refine((value) => {
-      if (!value) return true;
-      const IND_PHONE_REGEX = /^(\+91[\-\s]?)?[6789]\d{9}$/;
-      return IND_PHONE_REGEX.test(value);
-    }, "Invalid phone . It Should be 10 digits")
-    .optional(),
-  password: z
-    .string()
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-      {
-        message:
-          "minimum 8 char & min one (uppercase & lowercase letter, special char & number)",
-      }
-    ),
-});
-
-const EditUserSchema = z.object({
-  email: z.string().email("Enter a valid email"),
-  username: z.string().min(5, "user name should have min 5 character"),
-  phone: z
-    .string()
-    .refine((value) => {
-      if (!value) return true;
-
-      const IND_PHONE_REGEX = /^(\+91[\-\s]?)?[6789]\d{9}$/;
-      return IND_PHONE_REGEX.test(value);
-    }, "Invalid phone . It Should be 10 digits")
-    .optional(),
-});
-
-export const getAllUsers = async (
+export const getAllUsersHandler = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    let queryParams = req.query as unknown as GetUsersQuery;
+    let queryParams = req.query as unknown as TGetReqQuery;
 
     let search = "";
 
@@ -72,7 +36,6 @@ export const getAllUsers = async (
 
     filterQuery.username = { $regex: search, $options: "i" };
 
-    console.log(" page number ", page);
 
     const users = await User.aggregate([
       {
@@ -115,8 +78,9 @@ export const getAllUsers = async (
 
     const totalPages = Math.ceil(totalUsers / limit);
 
-    return res.status(200).json({ users, totalPages });
-  } catch (err: any) {
+    return res.status(HttpStatusCode.Ok).json({ users, totalPages });
+    
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -136,7 +100,7 @@ export const addNewUserHandler = async (
     if (!validationResult.success) {
       const validationError: ZodError = validationResult.error;
 
-      res.status(400).json({ message: validationError.errors[0].message });
+      res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: validationError.errors[0].message });
     }
 
     if (validationResult.success) {
@@ -144,7 +108,7 @@ export const addNewUserHandler = async (
 
       const duplicate = await User.findOne({ email });
 
-      if (duplicate) return res.sendStatus(409); // Conflict
+      if (duplicate) return res.sendStatus(HTTP_STATUS_CODES.CONFLICT); // Conflict
 
       const hashedPwd = await bcrypt.hash(password, 10);
 
@@ -158,9 +122,9 @@ export const addNewUserHandler = async (
 
       newUser.save();
 
-      res.status(201).json({ userId: newUser._id, email: newUser.email });
+      res.status(HTTP_STATUS_CODES.CREATED).json({ userId: newUser._id, email: newUser.email });
     }
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -179,12 +143,12 @@ export const getUserDataHandler = async (
 
     if (!user) {
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "Invalid UserID Failed To Fetch Data" });
     }
 
-    return res.status(200).json({ user });
-  } catch (err: any) {
+    return res.status(HttpStatusCode.Ok).json({ user });
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -206,7 +170,7 @@ export const editUserHandler = async (
     if (!validationResult.success) {
       const validationError: ZodError = validationResult.error;
 
-      res.status(400).json({ message: validationError.errors[0].message });
+      res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: validationError.errors[0].message });
     }
 
     if (validationResult.success) {
@@ -219,12 +183,12 @@ export const editUserHandler = async (
       });
 
       if (!updatedUser) {
-        res.status(400).json({ message: "Failed to Update User" });
+        res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "Failed to Update User" });
       }
 
-      res.status(200).json({ message: "success" });
+      res.status(HttpStatusCode.Ok).json({ message: "success" });
     }
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -244,11 +208,11 @@ export const blockUserHandler = async (
     });
 
     if (!updatedUser) {
-      res.status(400).json({ message: "Failed to Block User" });
+      res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "Failed to Block User" });
     }
 
-    res.status(200).json({ message: "success" });
-  } catch (err: any) {
+    res.status(HttpStatusCode.Ok).json({ message: "success" });
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -268,11 +232,11 @@ export const unBlockUserHandler = async (
     });
 
     if (!updatedUser) {
-      res.status(400).json({ message: "Failed to Block User" });
+      res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "Failed to Block User" });
     }
 
-    res.status(200).json({ message: "success" });
-  } catch (err: any) {
+    res.status(HttpStatusCode.Ok).json({ message: "success" });
+  } catch (err) {
     console.log(err);
 
     next(err);

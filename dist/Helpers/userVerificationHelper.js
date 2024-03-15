@@ -41,7 +41,7 @@ const nodemailer_1 = __importDefault(require("nodemailer"));
 const dotenv = __importStar(require("dotenv"));
 const otpDataModel_1 = require("../Models/otpDataModel");
 dotenv.config();
-const sendOtpEmail = ({ _id, email }) => __awaiter(void 0, void 0, void 0, function* () {
+const sendOtpEmail = ({ _id, email, }) => __awaiter(void 0, void 0, void 0, function* () {
     const otp = `${Math.floor(1000 + Math.random() * 9000)}`;
     console.log("otp", otp);
     const transporter = nodemailer_1.default.createTransport({

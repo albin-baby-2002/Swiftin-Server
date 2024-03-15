@@ -1,7 +1,10 @@
 import express from "express";
-import { getAllMessagesOfChat, sendMessage } from "../../Controllers/MessageControllers/MessageController";
+import {
+  getAllMessagesOfChatHandler,
+  sendMessageHandler,
+} from "../../Controllers/MessageControllers/MessageController";
 
 export const messageRouter = express.Router();
 
-messageRouter.post("/send", sendMessage);
-messageRouter.get("/:chatID",getAllMessagesOfChat );
+messageRouter.post("/send", sendMessageHandler);
+messageRouter.get("/:chatID", getAllMessagesOfChatHandler);

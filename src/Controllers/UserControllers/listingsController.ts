@@ -3,46 +3,13 @@ import mongoose from "mongoose";
 import { HotelListing } from "../../Models/hotelLisitingModal";
 import { ZodError, z } from "zod";
 import { HotelAddress } from "../../Models/hotelAddressModel";
+import { EditListingAddressSchema, EditListingImageSchema, EditListingSchema } from "../../Schemas/editListingSchema";
+import { TGetReqQuery } from "../../Types/getReqQueryType";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
 
-const EditListingSchema = z.object({
-  totalRooms: z.number().min(1),
-  maxGuestsPerRoom: z.number().min(1),
-  bedsPerRoom: z.number().min(1),
-  bathroomPerRoom: z.number().min(1),
-  amenities: z.array(z.string()),
-  aboutHotel: z.string().min(20),
-  listingTitle: z.string().min(10).max(60),
-  roomType: z.string().min(3),
-  rentPerNight: z.number().min(1000),
-});
 
-const EditListingImageSchema = z.object({
-  mainImage: z.string().refine((value) => {
-    return value;
-  }, "Main Img Is Compulsory"),
 
-  otherImages: z.array(z.string()).refine((values) => {
-    let pics = values.filter((val) => val.trim());
 
-    return pics.length >= 4;
-  }, "Needed Four Other Images"),
-});
-
-const EditListingAddressSchema = z.object({
-  addressLine: z.string().min(3, " Min length For address is 3").max(20),
-  city: z.string().min(3, " Min length For city is 3").max(15),
-  district: z.string().min(3, " Min length For district is 3").max(15),
-  state: z.string().min(3, " Min length is 3").max(15),
-  pinCode: z.string().refine((value) => {
-    const INDIAN_PINCODE_REGEX = /^[1-9][0-9]{5}$/;
-    return INDIAN_PINCODE_REGEX.test(value);
-  }, "Invalid Indian Pincode"),
-});
-
-interface GetHostListingsQuery {
-  search: string;
-  page: number;
-}
 
 interface CustomRequest extends Request {
   userInfo?: {
@@ -61,10 +28,10 @@ export const getAllHostListings = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify host " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify host " });
     }
 
-    let queryParams = req.query as unknown as GetHostListingsQuery;
+    let queryParams = req.query as unknown as TGetReqQuery;
 
     let search = "";
 
@@ -147,9 +114,9 @@ export const getAllHostListings = async (
 
     const totalPages = Math.ceil(totalProperties / limit);
 
-    return res.status(200).json({ properties, totalPages });
-  } catch (err: any) {
-    console.log(err, req.userInfo?.id);
+    return res.status(HTTP_STATUS_CODES.OK).json({ properties, totalPages });
+  } catch (err) {
+    console.log(err);
 
     next(err);
   }
@@ -164,31 +131,31 @@ export const activateListing = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify host " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify host " });
     }
 
     const listingID = new mongoose.Types.ObjectId(req.params.listingID);
 
     if (!listingID) {
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
     }
 
     const listing = await HotelListing.findOne({ _id: listingID, userID });
 
     if (!listing) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message: "failed to identify the specific listing of the host",
       });
     }
 
     if (!listing?.approvedForReservation) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message: "Admin haven't approved your listing",
       });
     }
 
     if (listing.isActiveForReservation) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message: "the listing is already in active state",
       });
     }
@@ -198,9 +165,9 @@ export const activateListing = async (
     await listing.save();
 
     return res
-      .status(200)
+      .status(HTTP_STATUS_CODES.OK)
       .json({ message: " listing activated for reservations successfully " });
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -216,32 +183,32 @@ export const deActivateListing = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify host " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify host " });
     }
 
     const listingID = new mongoose.Types.ObjectId(req.params.listingID);
 
     if (!listingID) {
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
     }
 
     const listing = await HotelListing.findOne({ _id: listingID, userID });
 
     if (!listing) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message: "failed to identify the specific listing of the host",
       });
     }
 
     if (!listing?.approvedForReservation) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message:
           "Admin haven't approved your listing. You can't to manage this listing",
       });
     }
 
     if (!listing.isActiveForReservation) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message: "the listing is already not in active state",
       });
     }
@@ -251,9 +218,9 @@ export const deActivateListing = async (
     await listing.save();
 
     return res
-      .status(200)
+      .status(HTTP_STATUS_CODES.OK)
       .json({ message: " listing activated for reservations successfully " });
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -269,18 +236,17 @@ export const getSingleListingData = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify host " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify host " });
     }
 
     const listingID = new mongoose.Types.ObjectId(req.params.listingID);
 
     if (!listingID) {
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
     }
 
     let filterQuery = { userID, _id: listingID };
 
-    console.log(filterQuery);
 
     const listing = await HotelListing.aggregate([
       {
@@ -304,10 +270,9 @@ export const getSingleListingData = async (
       },
     ]);
 
-    console.log(listing, "get single listing");
 
-    return res.status(200).json({ listing: listing[0] });
-  } catch (err: any) {
+    return res.status(HTTP_STATUS_CODES.OK).json({ listing: listing[0] });
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -323,25 +288,24 @@ export const editListingHandler = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify host " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify host " });
     }
 
     const listingID = new mongoose.Types.ObjectId(req.params.listingID);
 
     if (!listingID) {
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
     }
 
     const propertyData = req.body;
 
-    console.log("\t \t \t \t ", propertyData, "...listing ");
 
     const validationResult = EditListingSchema.safeParse(propertyData);
 
     if (!validationResult.success) {
       const validationError: ZodError = validationResult.error;
 
-      res.status(400).json({ message: validationError.errors[0].message });
+      res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: validationError.errors[0].message });
     }
 
     if (validationResult.success) {
@@ -359,7 +323,7 @@ export const editListingHandler = async (
       const listing = await HotelListing.findOne({ _id: listingID, userID });
 
       if (!listing) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
           message: "failed to identify the specific listing of the host",
         });
       }
@@ -381,12 +345,12 @@ export const editListingHandler = async (
 
       if (updatedListing)
         return res
-          .status(200)
+          .status(HTTP_STATUS_CODES.OK)
           .json({ message: "successfully updated the listing" });
 
-      return res.send(500).json({ message: "failed to update the listing" });
+      return res.send(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: "failed to update the listing" });
     }
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -402,25 +366,24 @@ export const editListingImagesHandler = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify host " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify host " });
     }
 
     const listingID = new mongoose.Types.ObjectId(req.params.listingID);
 
     if (!listingID) {
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
     }
 
     const imageData = req.body;
 
-    console.log("\t \t \t \t ", imageData, "...listing ");
 
     const validationResult = EditListingImageSchema.safeParse(imageData);
 
     if (!validationResult.success) {
       const validationError: ZodError = validationResult.error;
 
-      res.status(400).json({ message: validationError.errors[0].message });
+      res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: validationError.errors[0].message });
     }
 
     if (validationResult.success) {
@@ -429,7 +392,7 @@ export const editListingImagesHandler = async (
       const listing = await HotelListing.findOne({ _id: listingID, userID });
 
       if (!listing) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
           message: "failed to identify the specific listing of the host",
         });
       }
@@ -445,12 +408,12 @@ export const editListingImagesHandler = async (
 
       if (updatedListing)
         return res
-          .status(200)
+          .status(HTTP_STATUS_CODES.OK)
           .json({ message: "successfully updated the images" });
 
-      return res.send(500).json({ message: "failed to update the listing" });
+      return res.send(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: "failed to update the listing" });
     }
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -466,18 +429,17 @@ export const getListingAddress = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify host " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify host " });
     }
 
     const listingID = new mongoose.Types.ObjectId(req.params.listingID);
 
     if (!listingID) {
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
     }
 
     let filterQuery = { userID, _id: listingID };
 
-    console.log(filterQuery);
 
     const listing = await HotelListing.aggregate([
       {
@@ -506,10 +468,9 @@ export const getListingAddress = async (
       },
     ]);
 
-    console.log(listing, "get single listing");
 
-    return res.status(200).json({ ...listing[0] });
-  } catch (err: any) {
+    return res.status(HTTP_STATUS_CODES.OK).json({ ...listing[0] });
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -525,19 +486,19 @@ export const editListingAddress = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify host " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify host " });
     }
 
     const listingID = new mongoose.Types.ObjectId(req.params.listingID);
 
     if (!listingID) {
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
     }
 
     const listing = await HotelListing.findOne({ _id: listingID, userID });
 
     if (!listing) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message: "failed to identify the specific listing of the host",
       });
     }
@@ -546,14 +507,13 @@ export const editListingAddress = async (
 
     const addressData = req.body;
 
-    console.log("\t \t \t \t ", addressData, "...listing ");
 
     const validationResult = EditListingAddressSchema.safeParse(addressData);
 
     if (!validationResult.success) {
       const validationError: ZodError = validationResult.error;
 
-      res.status(400).json({ message: validationError.errors[0].message });
+      res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: validationError.errors[0].message });
     }
 
     if (validationResult.success) {
@@ -568,12 +528,12 @@ export const editListingAddress = async (
 
       if (updatedAddress)
         return res
-          .status(200)
+          .status(HTTP_STATUS_CODES.OK)
           .json({ message: "successfully updated the address" });
 
-      return res.send(500).json({ message: "failed to update the address" });
+      return res.send(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: "failed to update the address" });
     }
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);

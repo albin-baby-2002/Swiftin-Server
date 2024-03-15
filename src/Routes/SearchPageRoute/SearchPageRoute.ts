@@ -1,9 +1,8 @@
 import express from "express";
-import { hotelDataBySearch } from "../../Controllers/GeneralData/SearchPage";
-
+import {  listingsDataBySearchHandler } from "../../Controllers/GeneralData/SearchPage";
 
 const router = express.Router();
 
-router.get("/", hotelDataBySearch );
+router.get("/", listingsDataBySearchHandler);
 
 export default router;

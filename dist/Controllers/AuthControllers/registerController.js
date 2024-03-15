@@ -12,38 +12,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.newUserRegister = void 0;
+exports.newUserRegisterHandler = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const userVerificationHelper_1 = require("../../Helpers/userVerificationHelper");
-const zod_1 = require("zod");
 const userModel_1 = require("../../Models/userModel");
-const userSchema = zod_1.z.object({
-    email: zod_1.z.string().email("Enter a valid email"),
-    username: zod_1.z.string().min(5, "user name should have min 5 character"),
-    password: zod_1.z
-        .string()
-        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
-        message: "minimum 8 char & min one (uppercase & lowercase letter, special char & number)",
-    }),
-});
-const newUserRegister = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const registerUserSchema_1 = require("../../Schemas/registerUserSchema");
+const statusCodes_1 = require("../../Enums/statusCodes");
+const newUserRegisterHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const userData = req.body;
-    const validationResult = userSchema.safeParse(userData);
+    const validationResult = registerUserSchema_1.RegisterUserSchema.safeParse(userData);
     if (!validationResult.success) {
         const validationError = validationResult.error;
-        res.status(400).json({ message: validationError.errors[0].message });
+        res.status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST).json({ message: validationError.errors[0].message });
     }
     if (validationResult.success) {
         const { email, username, password } = validationResult.data;
         try {
             const existingUser = yield userModel_1.User.findOne({ email });
             if (existingUser === null || existingUser === void 0 ? void 0 : existingUser.verified) {
-                return res.sendStatus(409);
+                return res.sendStatus(statusCodes_1.HTTP_STATUS_CODES.CONFLICT);
             }
             if (existingUser && !(existingUser === null || existingUser === void 0 ? void 0 : existingUser.verified)) {
                 yield (0, userVerificationHelper_1.sendOtpEmail)(existingUser);
                 return res
-                    .status(200)
+                    .status(statusCodes_1.HTTP_STATUS_CODES.OK)
                     .json({ userId: existingUser._id, email: existingUser.email });
             }
             const hashedPwd = yield bcrypt_1.default.hash(password, 10);
@@ -54,7 +46,7 @@ const newUserRegister = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
             });
             newUser.save();
             yield (0, userVerificationHelper_1.sendOtpEmail)(newUser);
-            res.status(201).json({ userId: newUser._id, email: newUser.email });
+            res.status(statusCodes_1.HTTP_STATUS_CODES.CREATED).json({ userId: newUser._id, email: newUser.email });
         }
         catch (err) {
             console.log(err);
@@ -62,4 +54,4 @@ const newUserRegister = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         }
     }
 });
-exports.newUserRegister = newUserRegister;
+exports.newUserRegisterHandler = newUserRegisterHandler;

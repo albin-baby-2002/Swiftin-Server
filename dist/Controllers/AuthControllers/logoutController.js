@@ -9,27 +9,34 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.logoutHanlder = void 0;
 const userModel_1 = require("../../Models/userModel");
-const handleLogout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    //   console.log('logout handler');
-    // On client, also delete the accessToken
-    const cookies = req.cookies;
-    // console.log(cookies)
-    if (!(cookies === null || cookies === void 0 ? void 0 : cookies.jwt))
-        return res.sendStatus(204); //No content
-    const refreshToken = cookies.jwt;
-    // Is refreshToken in db?
-    const foundUser = yield userModel_1.User.findOne({ refreshToken }).exec();
-    if (!foundUser) {
+const statusCodes_1 = require("../../Enums/statusCodes");
+const logoutHanlder = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const cookies = req.cookies;
+        if (!(cookies === null || cookies === void 0 ? void 0 : cookies.jwt))
+            return res.sendStatus(statusCodes_1.HTTP_STATUS_CODES.NO_CONTENT); //No content
+        const refreshToken = cookies.jwt;
+        // Is refreshToken in db?
+        const foundUser = yield userModel_1.User.findOne({ refreshToken }).exec();
+        if (!foundUser) {
+            res.clearCookie("jwt", {
+                httpOnly: true,
+                sameSite: "none",
+                secure: true,
+            });
+            return res.sendStatus(statusCodes_1.HTTP_STATUS_CODES.NO_CONTENT);
+        }
+        // Delete refreshToken in db
+        foundUser.refreshToken = "";
+        yield foundUser.save();
         res.clearCookie("jwt", { httpOnly: true, sameSite: "none", secure: true });
-        return res.sendStatus(204);
+        res.sendStatus(statusCodes_1.HTTP_STATUS_CODES.OK);
     }
-    // console.log('found')
-    // Delete refreshToken in db
-    foundUser.refreshToken = "";
-    const result = yield foundUser.save();
-    // console.log(result);
-    res.clearCookie("jwt", { httpOnly: true, sameSite: "none", secure: true });
-    res.sendStatus(204);
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
 });
-exports.default = handleLogout;
+exports.logoutHanlder = logoutHanlder;

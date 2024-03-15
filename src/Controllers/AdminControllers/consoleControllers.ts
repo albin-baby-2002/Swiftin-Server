@@ -2,10 +2,10 @@ import { NextFunction, Request, Response } from "express";
 import { User } from "../../Models/userModel";
 import { HotelListing } from "../../Models/hotelLisitingModal";
 import { HotelReservation } from "../../Models/reservationModal";
-import { ListingData } from "../GeneralData/LisitingData";
-import { Console } from "console";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
+import { TChart, TTime } from "../../Types/chartTypes";
 
-export const getCardData = async (
+export const getCardDataHandler = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -27,33 +27,27 @@ export const getCardData = async (
       reservationStatus: "success",
     }).countDocuments();
 
-    console.log(hosts, "hosts", users);
-
     return res
-      .status(200)
+      .status(HTTP_STATUS_CODES.OK)
       .json({ users, listings, reservations, hosts: hosts.length });
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
   }
 };
 
-type time = "weekly" | "daily" | "yearly";
-
-type chart = "users" | "listings" | "reservations";
-
-export const getChartData = async (
+export const getChartDataHandler = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    let timeBasisForusersChart: time = "daily";
+    let timeBasisForusersChart: TTime = "daily";
 
-    let timeBasisForListingsChart: time = "daily";
+    let timeBasisForListingsChart: TTime = "daily";
 
-    let timeBasisForReservationsChart: time = "daily";
+    let timeBasisForReservationsChart: TTime = "daily";
 
     if (
       req.query.usersChart &&
@@ -82,13 +76,13 @@ export const getChartData = async (
       timeBasisForReservationsChart = req.query.reservationsChart;
     }
 
-    let fieldToQuery: { [key in chart]: string } = {
+    let fieldToQuery: { [key in TChart]: string } = {
       users: "joinedDate",
       listings: "createdAt",
       reservations: "dateOfTransaction",
     };
 
-    function getDatesAndQueryData(timeBaseForChart: time, chartType: chart) {
+    function getDatesAndQueryData(timeBaseForChart: TTime, chartType: TChart) {
       let startDate, endDate;
 
       let groupingQuery: any = {};
@@ -185,7 +179,6 @@ export const getChartData = async (
       "reservations"
     );
 
-    console.log(reservationsChartInfo?.groupingQuery, "QUERY");
 
     let usersChartData = await User.aggregate([
       {
@@ -227,7 +220,7 @@ export const getChartData = async (
             $gte: reservationsChartInfo?.startDate,
             $lte: reservationsChartInfo?.endDate,
           },
-          reservationStatus:"success"
+          reservationStatus: "success",
         },
       },
       {
@@ -237,11 +230,13 @@ export const getChartData = async (
         $sort: reservationsChartInfo?.sortQuery as any,
       },
     ]);
-    
-    console.log(reservationsChartData)
 
-    return res.status(200).json({ usersChartData, listingsChartData,reservationsChartData });
-  } catch (err: any) {
+    
+
+    return res
+      .status(HTTP_STATUS_CODES.OK)
+      .json({ usersChartData, listingsChartData, reservationsChartData });
+  } catch (err) {
     console.log(err);
 
     next(err);

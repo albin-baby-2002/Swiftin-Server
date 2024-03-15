@@ -4,34 +4,24 @@ import bcrypt from "bcrypt";
 import { sendOtpEmail } from "../../Helpers/userVerificationHelper";
 import { ZodError, z } from "zod";
 import { User } from "../../Models/userModel";
+import { RegisterUserSchema } from "../../Schemas/registerUserSchema";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
 
-const userSchema = z.object({
-  email: z.string().email("Enter a valid email"),
-  username: z.string().min(5, "user name should have min 5 character"),
-  password: z
-    .string()
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-      {
-        message:
-          "minimum 8 char & min one (uppercase & lowercase letter, special char & number)",
-      }
-    ),
-});
 
-export const newUserRegister = async (
+
+export const newUserRegisterHandler = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   const userData = req.body;
 
-  const validationResult = userSchema.safeParse(userData);
+  const validationResult = RegisterUserSchema.safeParse(userData);
 
   if (!validationResult.success) {
     const validationError: ZodError = validationResult.error;
 
-    res.status(400).json({ message: validationError.errors[0].message });
+    res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: validationError.errors[0].message });
   }
 
   if (validationResult.success) {
@@ -40,13 +30,13 @@ export const newUserRegister = async (
       const existingUser = await User.findOne({ email });
 
       if (existingUser?.verified) {
-        return res.sendStatus(409);
+        return res.sendStatus(HTTP_STATUS_CODES.CONFLICT);
       }
 
       if (existingUser && !existingUser?.verified) {
         await sendOtpEmail(existingUser);
         return res
-          .status(200)
+          .status(HTTP_STATUS_CODES.OK)
           .json({ userId: existingUser._id, email: existingUser.email });
       }
 
@@ -62,8 +52,8 @@ export const newUserRegister = async (
 
       await sendOtpEmail(newUser);
 
-      res.status(201).json({ userId: newUser._id, email: newUser.email });
-    } catch (err: any) {
+      res.status(HTTP_STATUS_CODES.CREATED).json({ userId: newUser._id, email: newUser.email });
+    } catch (err) {
       console.log(err);
 
       next(err);

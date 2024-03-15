@@ -1,33 +1,40 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { User } from "../../Models/userModel";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
 
+export const logoutHanlder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const cookies = req.cookies;
 
-const handleLogout = async (req: Request, res: Response) => {
-  //   console.log('logout handler');
-  // On client, also delete the accessToken
+    if (!cookies?.jwt) return res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT); //No content
+    const refreshToken = cookies.jwt;
 
-  const cookies = req.cookies;
-  // console.log(cookies)
+    // Is refreshToken in db?
+    const foundUser = await User.findOne({ refreshToken }).exec();
+    if (!foundUser) {
+      res.clearCookie("jwt", {
+        httpOnly: true,
+        sameSite: "none",
+        secure: true,
+      });
 
-  if (!cookies?.jwt) return res.sendStatus(204); //No content
-  const refreshToken = cookies.jwt;
+      return res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT);
+    }
 
-  // Is refreshToken in db?
-  const foundUser = await User.findOne({ refreshToken }).exec();
-  if (!foundUser) {
+    // Delete refreshToken in db
+    foundUser.refreshToken = "";
+    await foundUser.save();
+  
+
     res.clearCookie("jwt", { httpOnly: true, sameSite: "none", secure: true });
+    res.sendStatus(HTTP_STATUS_CODES.OK);
+  } catch (err) {
+    console.log(err);
 
-    return res.sendStatus(204);
+    next(err);
   }
-
-  // console.log('found')
-  // Delete refreshToken in db
-  foundUser.refreshToken = "";
-  const result = await foundUser.save();
-  // console.log(result);
-
-  res.clearCookie("jwt", { httpOnly: true, sameSite: "none", secure: true });
-  res.sendStatus(204);
 };
-
-export default handleLogout;

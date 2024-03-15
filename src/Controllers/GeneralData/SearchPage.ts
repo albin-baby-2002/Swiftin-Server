@@ -4,13 +4,8 @@ import mongoose from "mongoose";
 import { HotelListing } from "../../Models/hotelLisitingModal";
 import { z } from "zod";
 import jwt from "jsonwebtoken";
-interface SearchQuery {
-  search: string;
-  page: number;
-  rooms: number;
-  guests: number;
-  sortBy: "highToLow" | "lowToHigh";
-}
+import { TDecodedToken, TSearchQuery } from "../../Types/searchPageTypes";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
 
 interface CustomRequest extends Request {
   userInfo?: {
@@ -20,23 +15,13 @@ interface CustomRequest extends Request {
   };
 }
 
-interface UserInfo {
-  id: string;
-  username: string;
-  roles: number[];
-}
-
-interface DecodedToken {
-  UserInfo: UserInfo;
-}
-
-export const hotelDataBySearch = async (
+export const listingsDataBySearchHandler = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    let queryParams = req.query as unknown as SearchQuery;
+    let queryParams = req.query as unknown as TSearchQuery;
 
     let userID: string | mongoose.Types.ObjectId = "";
     const authHeader = (req.headers.authorization ||
@@ -49,7 +34,7 @@ export const hotelDataBySearch = async (
         let userData = jwt.decode(token);
 
         userID = new mongoose.Types.ObjectId(
-          (userData as DecodedToken).UserInfo.id
+          (userData as TDecodedToken).UserInfo.id
         );
       }
     }
@@ -57,7 +42,6 @@ export const hotelDataBySearch = async (
     let search = "";
 
     if (queryParams.search) {
-      console.log("yes");
       search = queryParams.search.trim();
     }
 
@@ -93,7 +77,7 @@ export const hotelDataBySearch = async (
 
     let limit = 8;
 
-    console.log(userID, "search");
+  
 
     let filterQuery = {
       $or: [
@@ -204,9 +188,9 @@ export const hotelDataBySearch = async (
     const totalPages = Math.ceil(totalProperties / limit);
 
     return res
-      .status(200)
+      .status(HTTP_STATUS_CODES.OK)
       .json({ properties, totalPages, totalHotels: totalProperties });
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);

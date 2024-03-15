@@ -12,15 +12,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ListingData = void 0;
+exports.ListingDataHandler = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const hotelLisitingModal_1 = require("../../Models/hotelLisitingModal");
 const reviewModel_1 = require("../../Models/reviewModel");
-const ListingData = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const statusCodes_1 = require("../../Enums/statusCodes");
+const ListingDataHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const listingID = new mongoose_1.default.Types.ObjectId(req.params.listingID);
         if (!listingID) {
-            return res.status(400).json({ message: "failed to identify listing " });
+            return res.status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
         }
         let filterQuery = { _id: listingID };
         const listing = yield hotelLisitingModal_1.HotelListing.aggregate([
@@ -98,17 +99,15 @@ const ListingData = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
                     rating: 1,
                     reviewMessage: 1,
                     username: "$userData.username",
-                    image: "$userData.image"
-                }
-            }
+                    image: "$userData.image",
+                },
+            },
         ]);
-        console.log(reviewData, "review \t \t \t");
-        console.log(listing, "get single listing");
-        return res.status(200).json({ listing: listing[0], reviewData });
+        return res.status(statusCodes_1.HTTP_STATUS_CODES.OK).json({ listing: listing[0], reviewData });
     }
     catch (err) {
         console.log(err);
         next(err);
     }
 });
-exports.ListingData = ListingData;
+exports.ListingDataHandler = ListingDataHandler;

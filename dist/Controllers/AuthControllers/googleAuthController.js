@@ -35,31 +35,31 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.googleAuthHandler = void 0;
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const google_auth_library_1 = require("google-auth-library");
 const axios_1 = __importDefault(require("axios"));
 const userModel_1 = require("../../Models/userModel");
-const handleGoogleAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const statusCodes_1 = require("../../Enums/statusCodes");
+const googleAuthHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const oAuth2Client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, "postmessage");
         const code = req.body.code;
         if (!code)
-            return res.status(400).json({ message: "invalid code" });
+            return res.status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "invalid code" });
         const { tokens } = yield oAuth2Client.getToken(code);
         if (tokens.access_token) {
-            console.log(tokens.access_token, "\t access token");
             const userInfo = yield axios_1.default
                 .get("https://www.googleapis.com/oauth2/v3/userinfo", {
                 headers: { Authorization: `Bearer ${tokens.access_token}` },
             })
                 .then((res) => res.data);
-            console.log(userInfo);
             const { sub, name, email, picture } = userInfo;
             let user = yield userModel_1.User.findOne({ email });
             if (user === null || user === void 0 ? void 0 : user.blocked) {
-                return res.status(400).json({
+                return res.status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST).json({
                     message: "Your are blocked by admin ",
                 });
             }
@@ -102,11 +102,18 @@ const handleGoogleAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, f
                 sameSite: "none",
                 maxAge: 24 * 60 * 60 * 1000,
             });
-            res.status(200).json({ roles, accessToken, user: user.username, image: user.image, userID: user._id });
+            res.status(statusCodes_1.HTTP_STATUS_CODES.OK).json({
+                roles,
+                accessToken,
+                user: user.username,
+                image: user.image,
+                userID: user._id,
+            });
         }
     }
     catch (err) {
+        console.log(err);
         next(err);
     }
 });
-exports.default = handleGoogleAuth;
+exports.googleAuthHandler = googleAuthHandler;

@@ -1,15 +1,14 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 import jwt from "jsonwebtoken";
-import { google } from "googleapis";
 
 import { Request, Response, NextFunction } from "express";
-import { JWT, OAuth2Client } from "google-auth-library";
-import { error } from "console";
+import {  OAuth2Client } from "google-auth-library";
 import axios from "axios";
 import { User } from "../../Models/userModel";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
 
-const handleGoogleAuth = async (
+export const googleAuthHandler = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -23,12 +22,11 @@ const handleGoogleAuth = async (
 
     const code = req.body.code;
 
-    if (!code) return res.status(400).json({ message: "invalid code" });
+    if (!code) return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "invalid code" });
 
     const { tokens } = await oAuth2Client.getToken(code);
 
     if (tokens.access_token) {
-      console.log(tokens.access_token, "\t access token");
 
       const userInfo = await axios
         .get("https://www.googleapis.com/oauth2/v3/userinfo", {
@@ -36,14 +34,13 @@ const handleGoogleAuth = async (
         })
         .then((res) => res.data);
 
-      console.log(userInfo);
 
       const { sub, name, email, picture } = userInfo;
 
       let user = await User.findOne({ email });
-      
+
       if (user?.blocked) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
           message: "Your are blocked by admin ",
         });
       }
@@ -109,11 +106,18 @@ const handleGoogleAuth = async (
         maxAge: 24 * 60 * 60 * 1000,
       });
 
-      res.status(200).json({ roles, accessToken, user: user.username ,image:user.image,userID:user._id});
+      res.status(HTTP_STATUS_CODES.OK).json({
+        roles,
+        accessToken,
+        user: user.username,
+        image: user.image,
+        userID: user._id,
+      });
     }
-  } catch (err: any) {
+  } catch (err) {
+    console.log(err)
     next(err);
   }
 };
 
-export default handleGoogleAuth;
+

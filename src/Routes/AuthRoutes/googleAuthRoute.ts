@@ -1,8 +1,9 @@
 import express from "express";
-import handleGoogleAuth from "../../Controllers/AuthControllers/googleAuthController";
-
+import  {
+  googleAuthHandler,
+} from "../../Controllers/AuthControllers/googleAuthController";
 const router = express.Router();
 
-router.post("/", handleGoogleAuth);
+router.post("/", googleAuthHandler);
 
 export default router;

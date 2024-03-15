@@ -2,7 +2,7 @@ import express from "express";
 import {
   resendOtpHandler,
   verifyOtpHandler,
-} from "../../Controllers/AuthControllers/OtpController";
+} from "../../Controllers/AuthControllers/OtpControllers";
 
 const router = express.Router();
 

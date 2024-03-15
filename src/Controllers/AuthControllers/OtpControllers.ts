@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
-import  { OTP } from "../../Models/otpDataModel";
+import { OTP } from "../../Models/otpDataModel";
 
 import mongoose from "mongoose";
 import { sendOtpEmail } from "../../Helpers/userVerificationHelper";
 import OtpResendAttempts from "../../Models/resendAttempts";
 import { User } from "../../Models/userModel";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
 
 export const verifyOtpHandler = async (
   req: Request,
@@ -18,11 +19,11 @@ export const verifyOtpHandler = async (
     userId = new mongoose.Types.ObjectId(userId);
 
     if (!otp) {
-      return res.status(400).json({ message: "All fields are required." });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "All fields are required." });
     }
 
     if (!email || !userId) {
-      return res.status(400).json({ message: "email or userId is empty" });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "email or userId is empty" });
     }
 
     const otpVerificationData = await OTP.findOne({
@@ -37,17 +38,17 @@ export const verifyOtpHandler = async (
         );
 
         if (updateUser) {
-          return res.status(200).json({ message: "success" });
+          return res.status(HTTP_STATUS_CODES.OK).json({ message: "success" });
         } else {
-          return res.status(500).json({ message: "Failed updating user data" });
+          return res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: "Failed updating user data" });
         }
       } else {
-        return res.status(400).json({ message: " Enter the right otp" });
+        return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: " Enter the right otp" });
       }
     } else {
-      return res.status(400).json({ message: "OTP Expired" });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "OTP Expired" });
     }
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -65,7 +66,7 @@ export const resendOtpHandler = async (
     userId = new mongoose.Types.ObjectId(userId);
 
     if (!email || !userId) {
-      return res.status(400).json({ message: "email or userId is empty" });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "email or userId is empty" });
     }
 
     const user = await User.findById(userId);
@@ -75,7 +76,7 @@ export const resendOtpHandler = async (
     });
 
     if (resendAttempts && resendAttempts?.attempts >= 3) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message:
           "Too many OTP resend attempts. Please try again after 5 minutes",
       });
@@ -98,11 +99,11 @@ export const resendOtpHandler = async (
         await newResendAttempt.save();
       }
 
-      return res.sendStatus(200);
+      return res.sendStatus(HTTP_STATUS_CODES.OK);
     } else {
-      return res.status(400).json({ message: "email or userId is empty" });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "email or userId is empty" });
     }
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);

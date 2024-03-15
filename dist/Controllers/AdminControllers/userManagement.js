@@ -12,42 +12,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.unBlockUserHandler = exports.blockUserHandler = exports.editUserHandler = exports.getUserDataHandler = exports.addNewUserHandler = exports.getAllUsers = void 0;
-const zod_1 = require("zod");
+exports.unBlockUserHandler = exports.blockUserHandler = exports.editUserHandler = exports.getUserDataHandler = exports.addNewUserHandler = exports.getAllUsersHandler = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const userModel_1 = require("../../Models/userModel");
-const AddUserSchema = zod_1.z.object({
-    email: zod_1.z.string().email("Enter a valid email"),
-    username: zod_1.z.string().min(5, "user name should have min 5 character"),
-    phone: zod_1.z
-        .string()
-        .refine((value) => {
-        if (!value)
-            return true;
-        const IND_PHONE_REGEX = /^(\+91[\-\s]?)?[6789]\d{9}$/;
-        return IND_PHONE_REGEX.test(value);
-    }, "Invalid phone . It Should be 10 digits")
-        .optional(),
-    password: zod_1.z
-        .string()
-        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
-        message: "minimum 8 char & min one (uppercase & lowercase letter, special char & number)",
-    }),
-});
-const EditUserSchema = zod_1.z.object({
-    email: zod_1.z.string().email("Enter a valid email"),
-    username: zod_1.z.string().min(5, "user name should have min 5 character"),
-    phone: zod_1.z
-        .string()
-        .refine((value) => {
-        if (!value)
-            return true;
-        const IND_PHONE_REGEX = /^(\+91[\-\s]?)?[6789]\d{9}$/;
-        return IND_PHONE_REGEX.test(value);
-    }, "Invalid phone . It Should be 10 digits")
-        .optional(),
-});
-const getAllUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const addUserSchema_1 = require("../../Schemas/addUserSchema");
+const editUserSchema_1 = require("../../Schemas/editUserSchema");
+const axios_1 = require("axios");
+const statusCodes_1 = require("../../Enums/statusCodes");
+const getAllUsersHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let queryParams = req.query;
         let search = "";
@@ -61,7 +33,6 @@ const getAllUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         let limit = 5;
         let filterQuery = { username: {}, "roles.Admin": { $exists: false } };
         filterQuery.username = { $regex: search, $options: "i" };
-        console.log(" page number ", page);
         const users = yield userModel_1.User.aggregate([
             {
                 $match: filterQuery,
@@ -97,27 +68,27 @@ const getAllUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         ]);
         const totalUsers = totalUsersMatchQuery.length;
         const totalPages = Math.ceil(totalUsers / limit);
-        return res.status(200).json({ users, totalPages });
+        return res.status(axios_1.HttpStatusCode.Ok).json({ users, totalPages });
     }
     catch (err) {
         console.log(err);
         next(err);
     }
 });
-exports.getAllUsers = getAllUsers;
+exports.getAllUsersHandler = getAllUsersHandler;
 const addNewUserHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userData = req.body;
-        const validationResult = AddUserSchema.safeParse(userData);
+        const validationResult = addUserSchema_1.AddUserSchema.safeParse(userData);
         if (!validationResult.success) {
             const validationError = validationResult.error;
-            res.status(400).json({ message: validationError.errors[0].message });
+            res.status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST).json({ message: validationError.errors[0].message });
         }
         if (validationResult.success) {
             const { email, username, password, phone } = validationResult.data;
             const duplicate = yield userModel_1.User.findOne({ email });
             if (duplicate)
-                return res.sendStatus(409); // Conflict
+                return res.sendStatus(statusCodes_1.HTTP_STATUS_CODES.CONFLICT); // Conflict
             const hashedPwd = yield bcrypt_1.default.hash(password, 10);
             const newUser = new userModel_1.User({
                 username,
@@ -127,7 +98,7 @@ const addNewUserHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, 
                 phone,
             });
             newUser.save();
-            res.status(201).json({ userId: newUser._id, email: newUser.email });
+            res.status(statusCodes_1.HTTP_STATUS_CODES.CREATED).json({ userId: newUser._id, email: newUser.email });
         }
     }
     catch (err) {
@@ -142,10 +113,10 @@ const getUserDataHandler = (req, res, next) => __awaiter(void 0, void 0, void 0,
         const user = yield userModel_1.User.findById(userID);
         if (!user) {
             return res
-                .status(400)
+                .status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST)
                 .json({ message: "Invalid UserID Failed To Fetch Data" });
         }
-        return res.status(200).json({ user });
+        return res.status(axios_1.HttpStatusCode.Ok).json({ user });
     }
     catch (err) {
         console.log(err);
@@ -157,10 +128,10 @@ const editUserHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
     try {
         const userData = req.body;
         const userID = req.params.userID;
-        const validationResult = EditUserSchema.safeParse(userData);
+        const validationResult = editUserSchema_1.EditUserSchema.safeParse(userData);
         if (!validationResult.success) {
             const validationError = validationResult.error;
-            res.status(400).json({ message: validationError.errors[0].message });
+            res.status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST).json({ message: validationError.errors[0].message });
         }
         if (validationResult.success) {
             const { email, username, phone } = validationResult.data;
@@ -170,9 +141,9 @@ const editUserHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
                 phone,
             });
             if (!updatedUser) {
-                res.status(400).json({ message: "Failed to Update User" });
+                res.status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "Failed to Update User" });
             }
-            res.status(200).json({ message: "success" });
+            res.status(axios_1.HttpStatusCode.Ok).json({ message: "success" });
         }
     }
     catch (err) {
@@ -188,9 +159,9 @@ const blockUserHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, f
             blocked: true,
         });
         if (!updatedUser) {
-            res.status(400).json({ message: "Failed to Block User" });
+            res.status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "Failed to Block User" });
         }
-        res.status(200).json({ message: "success" });
+        res.status(axios_1.HttpStatusCode.Ok).json({ message: "success" });
     }
     catch (err) {
         console.log(err);
@@ -205,9 +176,9 @@ const unBlockUserHandler = (req, res, next) => __awaiter(void 0, void 0, void 0,
             blocked: false,
         });
         if (!updatedUser) {
-            res.status(400).json({ message: "Failed to Block User" });
+            res.status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "Failed to Block User" });
         }
-        res.status(200).json({ message: "success" });
+        res.status(axios_1.HttpStatusCode.Ok).json({ message: "success" });
     }
     catch (err) {
         console.log(err);

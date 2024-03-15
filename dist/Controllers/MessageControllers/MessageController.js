@@ -9,23 +9,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllMessagesOfChat = exports.sendMessage = void 0;
+exports.getAllMessagesOfChatHandler = exports.sendMessageHandler = void 0;
 const messageModel_1 = require("../../Models/messageModel");
 const userModel_1 = require("../../Models/userModel");
 const chatModel_1 = require("../../Models/chatModel");
-const sendMessage = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const statusCodes_1 = require("../../Enums/statusCodes");
+const sendMessageHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const { content, chatID } = req.body;
         if (!content || !chatID) {
             return res
-                .status(400)
+                .status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST)
                 .json({ message: " missing chatID or content of message " });
         }
         const userID = (_a = req.userInfo) === null || _a === void 0 ? void 0 : _a.id;
         if (!userID) {
             return res
-                .status(500)
+                .status(statusCodes_1.HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR)
                 .json({ message: " Failed to identify user from req " });
         }
         let message = new messageModel_1.Message({
@@ -43,28 +44,30 @@ const sendMessage = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         yield chatModel_1.Chat.findByIdAndUpdate(chatID, {
             latestMessage: message,
         });
-        res.status(200).json(message);
+        res.status(statusCodes_1.HTTP_STATUS_CODES.OK).json(message);
     }
     catch (err) {
         console.log(err);
         next(err);
     }
 });
-exports.sendMessage = sendMessage;
-const getAllMessagesOfChat = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.sendMessageHandler = sendMessageHandler;
+const getAllMessagesOfChatHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const chatID = req.params.chatID;
         if (!chatID) {
-            return res.status(400).json({ message: "failed to identify chat" });
+            return res
+                .status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST)
+                .json({ message: "failed to identify chat" });
         }
         const messages = yield messageModel_1.Message.find({ chat: chatID })
             .populate("sender", "username email image")
             .populate("chat");
-        return res.status(200).json(messages);
+        return res.status(statusCodes_1.HTTP_STATUS_CODES.OK).json(messages);
     }
     catch (err) {
         console.log(err);
         next(err);
     }
 });
-exports.getAllMessagesOfChat = getAllMessagesOfChat;
+exports.getAllMessagesOfChatHandler = getAllMessagesOfChatHandler;

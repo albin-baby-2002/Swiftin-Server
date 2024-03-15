@@ -16,6 +16,7 @@ exports.getAllConversationsData = exports.GetExistingConversationOrCreateNew = e
 const mongoose_1 = __importDefault(require("mongoose"));
 const userModel_1 = require("../../Models/userModel");
 const chatModel_1 = require("../../Models/chatModel");
+const statusCodes_1 = require("../../Enums/statusCodes");
 const SearchUsersForChat = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -34,7 +35,7 @@ const SearchUsersForChat = (req, res, next) => __awaiter(void 0, void 0, void 0,
             _id: { $ne: (_a = req.userInfo) === null || _a === void 0 ? void 0 : _a.id },
         };
         const Users = yield userModel_1.User.find(query, { username: 1, email: 1, image: 1 });
-        return res.status(200).json({ Users });
+        return res.status(statusCodes_1.HTTP_STATUS_CODES.OK).json({ Users });
     }
     catch (err) {
         console.log(err);
@@ -47,7 +48,7 @@ const GetExistingConversationOrCreateNew = (req, res, next) => __awaiter(void 0,
     try {
         const recipientID = new mongoose_1.default.Types.ObjectId(req.body.recipientID);
         if (!recipientID) {
-            return res.status(400).json({ message: "Recipient id not received" });
+            return res.status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "Recipient id not received" });
         }
         let conversation = yield chatModel_1.Chat.find({
             isGroupChat: false,
@@ -63,7 +64,7 @@ const GetExistingConversationOrCreateNew = (req, res, next) => __awaiter(void 0,
             select: "username email image",
         });
         if (conversation.length > 0) {
-            return res.status(200).json({ conversation: conversation[0] });
+            return res.status(statusCodes_1.HTTP_STATUS_CODES.OK).json({ conversation: conversation[0] });
         }
         else {
             let conversation = new chatModel_1.Chat({
@@ -76,7 +77,7 @@ const GetExistingConversationOrCreateNew = (req, res, next) => __awaiter(void 0,
                 path: "users",
                 select: "username email image",
             });
-            return res.status(200).json({ conversation });
+            return res.status(statusCodes_1.HTTP_STATUS_CODES.OK).json({ conversation });
         }
     }
     catch (err) {
@@ -95,7 +96,7 @@ const getAllConversationsData = (req, res, next) => __awaiter(void 0, void 0, vo
             .populate({ path: "groupAdmin", select: "username email image" })
             .populate("latestMessage")
             .sort({ updatedAt: -1 });
-        return res.status(200).json({ conversations, userID: (_e = req.userInfo) === null || _e === void 0 ? void 0 : _e.id });
+        return res.status(statusCodes_1.HTTP_STATUS_CODES.OK).json({ conversations, userID: (_e = req.userInfo) === null || _e === void 0 ? void 0 : _e.id });
     }
     catch (err) {
         console.log(err);

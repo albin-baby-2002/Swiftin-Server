@@ -3,8 +3,8 @@ import { GetExistingConversationOrCreateNew, SearchUsersForChat, getAllConversat
 
  export const  chatRouter = express.Router();
 
-chatRouter.get("/search/users", SearchUsersForChat);
-chatRouter.post("/conversation/",GetExistingConversationOrCreateNew );
-chatRouter.get("/conversations/data",getAllConversationsData );
+ chatRouter.post("/",GetExistingConversationOrCreateNew );
+ chatRouter.get("/users", SearchUsersForChat);
+chatRouter.get("/data",getAllConversationsData );
 
 

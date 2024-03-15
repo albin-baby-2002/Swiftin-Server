@@ -1,20 +1,18 @@
 import { NextFunction, Request, Response } from "express";
 
-import mongoose from "mongoose";
 import { HotelListing } from "../../Models/hotelLisitingModal";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
+import { TGetReqQuery } from "../../Types/getReqQueryType";
 
-interface GetQuery {
-  search: string;
-  page: number;
-}
 
-export const getAllListings = async (
+
+export const getAllListingsHandler = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    let queryParams = req.query as unknown as GetQuery;
+    let queryParams = req.query as unknown as TGetReqQuery;
 
     let search = "";
 
@@ -33,8 +31,6 @@ export const getAllListings = async (
     let filterQuery = { listingTitle: {} };
 
     filterQuery.listingTitle = { $regex: search, $options: "i" };
-
-    console.log(" page number ", page);
 
     const properties = await HotelListing.aggregate([
       {
@@ -88,8 +84,6 @@ export const getAllListings = async (
       },
     ]);
 
-    console.log("\t \t \t \t", properties, "get properties");
-
     const totalPropertiesMatchingQuery = await HotelListing.aggregate([
       {
         $match: filterQuery,
@@ -100,15 +94,15 @@ export const getAllListings = async (
 
     const totalPages = Math.ceil(totalUsers / limit);
 
-    return res.status(200).json({ properties, totalPages });
-  } catch (err: any) {
+    return res.status(HTTP_STATUS_CODES.OK).json({ properties, totalPages });
+  } catch (err) {
     console.log(err);
 
     next(err);
   }
 };
 
-export const approveListing = async (
+export const approveListingHandler = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -117,7 +111,9 @@ export const approveListing = async (
     let listingID = req.params.listingID;
 
     if (!listingID)
-      throw new Error(" Failed to get listingID param for approving listings");
+      return res
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
+        .json({ message: "ListingID not found in params" });
 
     let listing = await HotelListing.findById(listingID);
 
@@ -129,22 +125,26 @@ export const approveListing = async (
         await listing.save();
 
         return res
-          .status(200)
+          .status(HTTP_STATUS_CODES.OK)
           .json({ message: "property approved for reservation" });
       } else {
-        return res.status(400).json({ message: " property already approved" });
+        return res
+          .status(HTTP_STATUS_CODES.BAD_REQUEST)
+          .json({ message: " property already approved" });
       }
+    } else {
+      return res
+        .status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: "Failed to get listing data from db" });
     }
-
-    throw new Error("failed to get listing data ");
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
   }
 };
 
-export const disapproveListing = async (
+export const disapproveListingHandler = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -153,7 +153,9 @@ export const disapproveListing = async (
     let listingID = req.params.listingID;
 
     if (!listingID)
-      throw new Error(" Failed to get listingID param for approving listings");
+      return res
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
+        .json({ message: "ListingID not found in params" });
 
     let listing = await HotelListing.findById(listingID);
 
@@ -165,101 +167,19 @@ export const disapproveListing = async (
         await listing.save();
 
         return res
-          .status(200)
+          .status(HTTP_STATUS_CODES.OK)
           .json({ message: "property successfully disapproved" });
       } else {
         return res
-          .status(400)
+          .status(HTTP_STATUS_CODES.BAD_REQUEST)
           .json({ message: " property already in disapproval" });
       }
+    } else {
+      return res
+        .status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: "Failed to get listing data from db" });
     }
-
-    throw new Error("failed to get listing data ");
-  } catch (err: any) {
-    console.log(err);
-
-    next(err);
-  }
-};
-
-export const getAllHosts = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    let queryParams = req.query as unknown as GetQuery;
-
-    let search = "";
-
-    if (queryParams.search) {
-      search = queryParams.search.trim();
-    }
-
-    let page = 1;
-
-    if (Number(queryParams.page)) {
-      page = Number(queryParams.page);
-    }
-
-    let limit = 5;
-
-    let filterQuery = { username: {} };
-
-    filterQuery.username = { $regex: search, $options: "i" };
-
-    const hosts = await HotelListing.aggregate([
-      {
-        $group: { _id: "$userID", listings: { $sum: 1 } },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "_id",
-          foreignField: "_id",
-          as: "userData",
-        },
-      },
-      {
-        $unwind: { path: "$userData", preserveNullAndEmptyArrays: true },
-      },
-
-      {
-        $project: {
-          username: "$userData.username",
-          email: "$userData.email",
-          blocked: "$userData.blocked",
-          joinedDate: {
-            $dateToString: {
-              format: "%Y-%m-%d",
-              date: "$userData.joinedDate",
-            },
-          },
-          listings: 1,
-        },
-      },
-      {
-        $skip: (page - 1) * limit,
-      },
-      {
-        $limit: limit,
-      },
-    ]);
-
-    console.log(hosts);
-
-    const totalHosts = await HotelListing.aggregate([
-      {
-        $group: { _id: "$userID", listings: { $sum: 1 } },
-      },
-    ]);
-
-    const total = totalHosts.length;
-
-    const totalPages = Math.ceil(total / limit);
-
-    return res.status(200).json({ hosts, totalPages });
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);

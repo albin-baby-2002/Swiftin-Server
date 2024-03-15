@@ -30,13 +30,14 @@ exports.verifyJWT = void 0;
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const statusCodes_1 = require("../Enums/statusCodes");
 const verifyJWT = (req, res, next) => {
     console.log("JWT ENTERED");
     const authHeader = (req.headers.authorization ||
         req.headers.Authorization);
     //   console.log(authHeader);
     if (!(authHeader === null || authHeader === void 0 ? void 0 : authHeader.startsWith("Bearer ")))
-        return res.sendStatus(401); // unauthorized
+        return res.sendStatus(statusCodes_1.HTTP_STATUS_CODES.UNAUTHORIZED); // unauthorized
     try {
         const ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET;
         if (!ACCESS_SECRET) {
@@ -46,7 +47,7 @@ const verifyJWT = (req, res, next) => {
         jsonwebtoken_1.default.verify(token, ACCESS_SECRET, (err, decoded) => {
             if (err) {
                 console.log("failed to verify");
-                return res.sendStatus(403);
+                return res.sendStatus(statusCodes_1.HTTP_STATUS_CODES.FORBIDDEN);
             }
             req.userInfo = req.userInfo || { id: "", username: "", roles: [] };
             req.userInfo.id = decoded.UserInfo.id;

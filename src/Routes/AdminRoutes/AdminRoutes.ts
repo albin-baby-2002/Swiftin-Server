@@ -4,38 +4,70 @@ import {
   addNewUserHandler,
   blockUserHandler,
   editUserHandler,
-  getAllUsers,
+  getAllUsersHandler,
   getUserDataHandler,
   unBlockUserHandler,
 } from "../../Controllers/AdminControllers/userManagement";
 import {
-  approveListing,
-  disapproveListing,
-  getAllHosts,
-  getAllListings,
-} from "../../Controllers/AdminControllers/listingsManagement";
-import { getAllReservations } from "../../Controllers/AdminControllers/getReservations";
-import { getCardData, getChartData } from "../../Controllers/AdminControllers/console";
+  approveListingHandler,
+  disapproveListingHandler,
+  getAllListingsHandler,
+} from "../../Controllers/AdminControllers/listingsControllers";
+import { getAllReservationsHandler } from "../../Controllers/AdminControllers/reservationControllers";
+import {
+  getCardDataHandler,
+  getChartDataHandler,
+} from "../../Controllers/AdminControllers/consoleControllers";
+import { getAllHostsHandler } from "../../Controllers/AdminControllers/hostControllers";
 
 const router = express.Router();
 
-router.get("/users", getAllUsers);
+// get all user data
+
+router.get("/users", getAllUsersHandler);
+
+// admin add new user
 
 router.post("/user/add", addNewUserHandler);
 
-router.get("/user/:userID", getUserDataHandler);
-router.patch("/user/:userID", editUserHandler);
+// get single user data or edit single user data 
+
+router.route("/user/:userID").get(getUserDataHandler).patch(editUserHandler);
+
+// block a user
+
 router.patch("/user/block/:userID", blockUserHandler);
+
+// unblock a user
+
 router.patch("/user/unblock/:userID", unBlockUserHandler);
 
-router.get("/listings", getAllListings);
-router.patch("/listings/approve/:listingID", approveListing);
-router.patch("/listings/disapprove/:listingID",disapproveListing );
+// get all listings data
 
-router.get("/reservations",getAllReservations);
-router.get("/hosts",getAllHosts);
+router.get("/listings", getAllListingsHandler);
 
-router.get("/console",getCardData)
-router.get("/charts",getChartData)
+// approve a listing
+
+router.patch("/listing/approve/:listingID", approveListingHandler);
+
+// disapprove a listing
+
+router.patch("/listing/disapprove/:listingID", disapproveListingHandler);
+
+// get all reservations data
+
+router.get("/reservations", getAllReservationsHandler);
+
+// get all hosts data
+
+router.get("/hosts", getAllHostsHandler);
+
+// get cards data for console
+
+router.get("/cards", getCardDataHandler);
+
+// get chart data for console
+
+router.get("/charts", getChartDataHandler);
 
 export default router;

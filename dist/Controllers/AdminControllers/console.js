@@ -9,11 +9,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getChartData = exports.getCardData = void 0;
+exports.getChartDataHandler = exports.getCardDataHandler = void 0;
 const userModel_1 = require("../../Models/userModel");
 const hotelLisitingModal_1 = require("../../Models/hotelLisitingModal");
 const reservationModal_1 = require("../../Models/reservationModal");
-const getCardData = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const getCardDataHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const users = yield userModel_1.User.find().countDocuments();
         const hosts = yield hotelLisitingModal_1.HotelListing.aggregate([
@@ -37,8 +37,8 @@ const getCardData = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         next(err);
     }
 });
-exports.getCardData = getCardData;
-const getChartData = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.getCardDataHandler = getCardDataHandler;
+const getChartDataHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let timeBasisForusersChart = "daily";
         let timeBasisForListingsChart = "daily";
@@ -163,7 +163,7 @@ const getChartData = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
                         $gte: reservationsChartInfo === null || reservationsChartInfo === void 0 ? void 0 : reservationsChartInfo.startDate,
                         $lte: reservationsChartInfo === null || reservationsChartInfo === void 0 ? void 0 : reservationsChartInfo.endDate,
                     },
-                    reservationStatus: "success"
+                    reservationStatus: "success",
                 },
             },
             {
@@ -174,11 +174,13 @@ const getChartData = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
             },
         ]);
         console.log(reservationsChartData);
-        return res.status(200).json({ usersChartData, listingsChartData, reservationsChartData });
+        return res
+            .status(200)
+            .json({ usersChartData, listingsChartData, reservationsChartData });
     }
     catch (err) {
         console.log(err);
         next(err);
     }
 });
-exports.getChartData = getChartData;
+exports.getChartDataHandler = getChartDataHandler;

@@ -14,7 +14,9 @@ router.route("/profile").get(UserController_1.getProfileInfo).patch(UserControll
 router.patch("/profileImg", UserController_1.profileImgChangeHandler);
 // listings hosted by user data
 router.get("/listings", listingsController_1.getAllHostListings);
+// create order for a listing
 router.post("/listing/reserve/createOrder", propertyControllers_1.createReservationOrderHandler);
+// handle payment success
 router.post("/listing/reserve/success", propertyControllers_1.validatePaymentAndCompleteReservation);
 router.post("/listing/checkAvailability", propertyControllers_1.checkAvailability);
 // activate and deactivate reservations for listing hosted by user
@@ -40,4 +42,5 @@ router.get("/bookings", propertyControllers_1.getAllUserBookings);
 router.patch("/bookings/:reservationID", propertyControllers_1.cancelReservationHandler);
 router.get("/reservations/received", propertyControllers_1.getAllListingsReservations);
 router.patch("/reservations/received/cancel/:reservationID", propertyControllers_1.hostCancelReservation);
+router.post('/property/list', propertyControllers_1.listPropertyHandler);
 exports.default = router;

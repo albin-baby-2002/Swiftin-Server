@@ -9,9 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllReservations = void 0;
+exports.getAllReservationsHandler = void 0;
 const reservationModal_1 = require("../../Models/reservationModal");
-const getAllReservations = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const getAllReservationsHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let queryParams = req.query;
         let search = "";
@@ -139,4 +139,4 @@ const getAllReservations = (req, res, next) => __awaiter(void 0, void 0, void 0,
         next(err);
     }
 });
-exports.getAllReservations = getAllReservations;
+exports.getAllReservationsHandler = getAllReservationsHandler;

@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 
 import mongoose from "mongoose";
-import { HotelListing } from "../../Models/hotelLisitingModal";
 import { User } from "../../Models/userModel";
 import { Chat } from "../../Models/chatModel";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
 
 interface CustomRequest extends Request {
   userInfo?: {
@@ -38,8 +38,8 @@ export const SearchUsersForChat = async (
 
     const Users = await User.find(query, { username: 1, email: 1, image: 1 });
 
-    return res.status(200).json({ Users });
-  } catch (err: any) {
+    return res.status(HTTP_STATUS_CODES.OK).json({ Users });
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -55,7 +55,7 @@ export const GetExistingConversationOrCreateNew = async (
     const recipientID = new mongoose.Types.ObjectId(req.body.recipientID);
 
     if (!recipientID) {
-      return res.status(400).json({ message: "Recipient id not received" });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "Recipient id not received" });
     }
 
     let conversation = await Chat.find({
@@ -74,7 +74,7 @@ export const GetExistingConversationOrCreateNew = async (
     });
 
     if (conversation.length > 0) {
-      return res.status(200).json({ conversation: conversation[0] });
+      return res.status(HTTP_STATUS_CODES.OK).json({ conversation: conversation[0] });
     } else {
       let conversation = new Chat({
         chatName: "sender",
@@ -89,9 +89,9 @@ export const GetExistingConversationOrCreateNew = async (
         select: "username email image",
       });
 
-      return res.status(200).json({ conversation });
+      return res.status(HTTP_STATUS_CODES.OK).json({ conversation });
     }
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -112,8 +112,8 @@ export const getAllConversationsData = async (
       .populate("latestMessage")
       .sort({ updatedAt: -1 });
 
-    return res.status(200).json({ conversations, userID: req.userInfo?.id });
-  } catch (err: any) {
+    return res.status(HTTP_STATUS_CODES.OK).json({ conversations, userID: req.userInfo?.id });
+  } catch (err) {
     console.log(err);
 
     next(err);

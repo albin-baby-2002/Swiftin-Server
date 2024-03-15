@@ -4,6 +4,7 @@ import { NextFunction, Request, Response } from "express";
 dotenv.config();
 
 import jwt, { JwtPayload } from "jsonwebtoken";
+import { HTTP_STATUS_CODES } from "../Enums/statusCodes";
 
 export interface CustomRequest extends Request {
   userInfo?: {
@@ -35,7 +36,7 @@ export const verifyJWT = (
 
   //   console.log(authHeader);
 
-  if (!authHeader?.startsWith("Bearer ")) return res.sendStatus(401); // unauthorized
+  if (!authHeader?.startsWith("Bearer ")) return res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED); // unauthorized
 
   try {
     const ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET;
@@ -49,7 +50,7 @@ export const verifyJWT = (
     jwt.verify(token, ACCESS_SECRET, (err, decoded) => {
       if (err) {
         console.log("failed to verify");
-        return res.sendStatus(403);
+        return res.sendStatus(HTTP_STATUS_CODES.FORBIDDEN);
       }
 
       req.userInfo = req.userInfo || { id: "", username: "", roles: [] };
@@ -59,10 +60,7 @@ export const verifyJWT = (
       req.userInfo.roles = (decoded as DecodedToken).UserInfo.roles;
 
       next();
-     
     });
-
- 
   } catch (err: any) {
     next(err);
   }

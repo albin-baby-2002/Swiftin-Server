@@ -1,11 +1,17 @@
-import bcrypt from 'bcrypt'
+import bcrypt from "bcrypt";
 
-import nodemailer from 'nodemailer'
+import nodemailer from "nodemailer";
 import * as dotenv from "dotenv";
-import { OTP } from '../Models/otpDataModel';
+import { OTP } from "../Models/otpDataModel";
 dotenv.config();
 
-export const sendOtpEmail = async ({ _id, email }:{_id:string,email:string}) => {
+export const sendOtpEmail = async ({
+  _id,
+  email,
+}: {
+  _id: string;
+  email: string;
+}) => {
   const otp = `${Math.floor(1000 + Math.random() * 9000)}`;
 
   console.log("otp", otp);
@@ -56,5 +62,3 @@ export const sendOtpEmail = async ({ _id, email }:{_id:string,email:string}) => 
     }
   });
 };
-
-

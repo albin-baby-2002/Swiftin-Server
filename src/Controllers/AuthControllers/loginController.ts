@@ -1,17 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
-
-
 import { ZodError, z } from "zod";
 import jwt from "jsonwebtoken";
 import { User } from "../../Models/userModel";
+import { authSchema } from "../../Schemas/authSchema";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
 
-const authSchema = z.object({
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(8, "Password should be at least 8 character long"),
-});
-
-export const loginController = async (
+export const loginHandler = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -23,7 +18,7 @@ export const loginController = async (
   if (!validationResult.success) {
     const validationError: ZodError = validationResult.error;
 
-    return res.status(400).json({ message: validationError.errors[0].message });
+    return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: validationError.errors[0].message });
   }
 
   if (validationResult.success) {
@@ -32,10 +27,10 @@ export const loginController = async (
     try {
       const foundUser = await User.findOne({ email });
 
-      if (!foundUser) return res.sendStatus(404); // 404 - User Not found
+      if (!foundUser) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND); // 404 - User Not found
 
       if (!foundUser.password && foundUser.googleId) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
           message:
             "This Account don't have password only Google Login Available",
         });
@@ -45,16 +40,15 @@ export const loginController = async (
 
       if (match) {
         if (!foundUser.verified) {
-          console.log("email not verified");
 
-          return res.status(400).json({
+          return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
             message:
               "Email not verified. sign Up again and complete verification ",
           });
         }
 
         if (foundUser.blocked) {
-          return res.status(400).json({
+          return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
             message: "Your are blocked by admin ",
           });
         }
@@ -99,11 +93,17 @@ export const loginController = async (
           maxAge: 24 * 60 * 60 * 1000,
         });
 
-        res.status(200).json({ roles, accessToken, user: foundUser.username,image:foundUser.image,userID:foundUser._id });
+        res.status(HTTP_STATUS_CODES.OK).json({
+          roles,
+          accessToken,
+          user: foundUser.username,
+          image: foundUser.image,
+          userID: foundUser._id,
+        });
       } else {
-        return res.status(400).json({ message: "Wrong password" });
+        return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "Wrong password" });
       }
-    } catch (err: any) {
+    } catch (err) {
       console.log(err);
 
       next(err);

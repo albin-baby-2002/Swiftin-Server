@@ -16,14 +16,14 @@ exports.profileImgChangeHandler = exports.editProfileHandler = exports.getProfil
 const personalAddress_1 = require("../../Models/personalAddress");
 const mongoose_1 = __importDefault(require("mongoose"));
 const userModel_1 = require("../../Models/userModel");
+const statusCodes_1 = require("../../Enums/statusCodes");
 const getProfileInfo = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         if (!((_a = req.userInfo) === null || _a === void 0 ? void 0 : _a.id)) {
-            return res.status(400).json({ message: "failed to load user data" });
+            return res.status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to load user data" });
         }
         let userID = new mongoose_1.default.Types.ObjectId(req.userInfo.id);
-        console.log(userID);
         const userData = yield userModel_1.User.aggregate([
             {
                 $match: {
@@ -60,8 +60,7 @@ const getProfileInfo = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
                 },
             },
         ]);
-        console.log(userData);
-        return res.status(200).json({ userData: userData[0] });
+        return res.status(statusCodes_1.HTTP_STATUS_CODES.OK).json({ userData: userData[0] });
     }
     catch (err) {
         console.log(err);
@@ -74,10 +73,9 @@ const editProfileHandler = (req, res, next) => __awaiter(void 0, void 0, void 0,
     try {
         const userID = (_b = req.userInfo) === null || _b === void 0 ? void 0 : _b.id;
         if (!userID) {
-            return res.status(400).json({ message: "failed to identify user " });
+            return res.status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify user " });
         }
         const { username, phone, aboutYou, addressLine, locality, city, district, state, country, pinCode, } = req.body;
-        console.log(req.body);
         const user = yield userModel_1.User.findById(userID);
         if (user) {
             user.username = username;
@@ -98,7 +96,7 @@ const editProfileHandler = (req, res, next) => __awaiter(void 0, void 0, void 0,
                 yield address.save();
                 user.address = address._id;
                 yield user.save();
-                return res.sendStatus(200);
+                return res.sendStatus(statusCodes_1.HTTP_STATUS_CODES.OK);
             }
             const address = yield personalAddress_1.PersonalAddress.findByIdAndUpdate(user.address, {
                 addressLine,
@@ -109,8 +107,7 @@ const editProfileHandler = (req, res, next) => __awaiter(void 0, void 0, void 0,
                 country,
                 pinCode,
             });
-            console.log("success");
-            return res.sendStatus(200);
+            return res.sendStatus(statusCodes_1.HTTP_STATUS_CODES.OK);
         }
     }
     catch (err) {
@@ -124,15 +121,14 @@ const profileImgChangeHandler = (req, res, next) => __awaiter(void 0, void 0, vo
     try {
         const userID = (_c = req.userInfo) === null || _c === void 0 ? void 0 : _c.id;
         if (!userID) {
-            return res.status(400).json({ message: "failed to identify user " });
+            return res.status(statusCodes_1.HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify user " });
         }
         const { publicID } = req.body;
-        console.log(req.body, "img upload ");
         const user = yield userModel_1.User.findById(userID);
         if (user) {
             user.image = publicID;
             yield user.save();
-            return res.sendStatus(200);
+            return res.sendStatus(statusCodes_1.HTTP_STATUS_CODES.OK);
         }
     }
     catch (err) {

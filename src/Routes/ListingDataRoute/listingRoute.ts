@@ -1,9 +1,9 @@
 import express from "express";
-import { ListingData } from "../../Controllers/GeneralData/LisitingData";
+import { ListingDataHandler } from "../../Controllers/GeneralData/LisitingData";
 
 
 const router = express.Router();
 
-router.get("/details/:listingID", ListingData);
+router.get("/details/:listingID", ListingDataHandler);
 
 export default router;

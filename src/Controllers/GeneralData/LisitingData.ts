@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import { HotelListing } from "../../Models/hotelLisitingModal";
 import { Review } from "../../Models/reviewModel";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
 
 interface CustomRequest extends Request {
   userInfo?: {
@@ -12,7 +13,7 @@ interface CustomRequest extends Request {
   };
 }
 
-export const ListingData = async (
+export const ListingDataHandler = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
@@ -21,7 +22,7 @@ export const ListingData = async (
     const listingID = new mongoose.Types.ObjectId(req.params.listingID);
 
     if (!listingID) {
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
     }
 
     let filterQuery = { _id: listingID };
@@ -100,23 +101,20 @@ export const ListingData = async (
         $unwind: { path: "$userData", preserveNullAndEmptyArrays: true },
       },
       {
-        $project:{
-          userID:1,
-          listingID:1,
-          rating:1,
-          reviewMessage:1,
-          username:"$userData.username",
-          image:"$userData.image"
-        }
-      }
+        $project: {
+          userID: 1,
+          listingID: 1,
+          rating: 1,
+          reviewMessage: 1,
+          username: "$userData.username",
+          image: "$userData.image",
+        },
+      },
     ]);
 
-    console.log(reviewData, "review \t \t \t");
 
-    console.log(listing, "get single listing");
-
-    return res.status(200).json({ listing: listing[0] ,reviewData});
-  } catch (err: any) {
+    return res.status(HTTP_STATUS_CODES.OK).json({ listing: listing[0], reviewData });
+  } catch (err) {
     console.log(err);
 
     next(err);

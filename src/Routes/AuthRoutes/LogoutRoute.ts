@@ -1,9 +1,9 @@
 import express from "express";
 
-import handleLogout from "../../Controllers/AuthControllers/logoutController";
+import { logoutHanlder } from "../../Controllers/AuthControllers/logoutController";
 
 const router = express.Router();
 
-router.get("/", handleLogout);
+router.get("/", logoutHanlder);
 
 export default router;

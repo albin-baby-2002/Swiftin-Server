@@ -25,6 +25,7 @@ import {
   getAllUserBookings,
   getWishlistData,
   hostCancelReservation,
+  listPropertyHandler,
   removeFromWishlist,
   validatePaymentAndCompleteReservation,
 } from "../../Controllers/PropertyControllers/propertyControllers";
@@ -43,7 +44,12 @@ router.patch("/profileImg", profileImgChangeHandler);
 
 router.get("/listings", getAllHostListings);
 
+// create order for a listing
+
 router.post("/listing/reserve/createOrder", createReservationOrderHandler);
+
+// handle payment success
+
 router.post("/listing/reserve/success", validatePaymentAndCompleteReservation);
 
 router.post("/listing/checkAvailability", checkAvailability);
@@ -86,4 +92,6 @@ router.patch(
   "/reservations/received/cancel/:reservationID",
   hostCancelReservation
 );
+
+router.post('/property/list',listPropertyHandler)
 export default router;

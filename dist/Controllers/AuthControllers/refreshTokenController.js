@@ -35,17 +35,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.refreshTokenHandler = void 0;
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const userModel_1 = require("../../Models/userModel");
-const handleRefreshToken = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const statusCodes_1 = require("../../Enums/statusCodes");
+const refreshTokenHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const cookies = req.cookies;
-    console.log("req for refresh");
-    console.log(cookies);
     if (!(cookies === null || cookies === void 0 ? void 0 : cookies.jwt))
-        return res.sendStatus(401); // unauthorized
+        return res.sendStatus(statusCodes_1.HTTP_STATUS_CODES.UNAUTHORIZED); // unauthorized
     const refreshToken = cookies.jwt;
     try {
         const ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET;
@@ -55,13 +55,16 @@ const handleRefreshToken = (req, res, next) => __awaiter(void 0, void 0, void 0,
         }
         const foundUser = yield userModel_1.User.findOne({ refreshToken });
         if (!foundUser)
-            return res.sendStatus(403); //Forbidden
-        jsonwebtoken_1.default.verify(refreshToken, REFRESH_SECRET, (err, decoded) => {
+            return res.sendStatus(statusCodes_1.HTTP_STATUS_CODES.FORBIDDEN); //Forbidden
+        jsonwebtoken_1.default.verify(refreshToken, REFRESH_SECRET, (err, decoded) => __awaiter(void 0, void 0, void 0, function* () {
             let decodedID = new mongoose_1.default.Types.ObjectId(decoded.id);
             let userID = new mongoose_1.default.Types.ObjectId(foundUser._id);
+            const userData = yield userModel_1.User.findById(userID);
+            if (userData === null || userData === void 0 ? void 0 : userData.blocked) {
+                return res.status(statusCodes_1.HTTP_STATUS_CODES.FORBIDDEN).json({ message: "you are blocked by admin" });
+            }
             if (err || !userID.equals(decodedID)) {
-                console.log(foundUser, decoded);
-                return res.sendStatus(403);
+                return res.sendStatus(statusCodes_1.HTTP_STATUS_CODES.FORBIDDEN);
             }
             const roles = Object.values(foundUser.roles).filter((role) => role);
             const accessToken = jsonwebtoken_1.default.sign({
@@ -71,12 +74,18 @@ const handleRefreshToken = (req, res, next) => __awaiter(void 0, void 0, void 0,
                     roles: roles,
                 },
             }, ACCESS_SECRET, { expiresIn: "30m" });
-            res.json({ roles, accessToken, user: decoded.username, image: foundUser.image, userID: decoded.id });
-        });
+            return res.status(statusCodes_1.HTTP_STATUS_CODES.OK).json({
+                roles,
+                accessToken,
+                user: decoded.username,
+                image: foundUser.image,
+                userID: decoded.id,
+            });
+        }));
     }
     catch (err) {
         console.log(err);
         next(err);
     }
 });
-exports.default = handleRefreshToken;
+exports.refreshTokenHandler = refreshTokenHandler;

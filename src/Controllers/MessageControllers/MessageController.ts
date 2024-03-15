@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { Message } from "../../Models/messageModel";
 import { User } from "../../Models/userModel";
 import { Chat } from "../../Models/chatModel";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
 
 interface CustomRequest extends Request {
   userInfo?: {
@@ -11,7 +12,7 @@ interface CustomRequest extends Request {
   };
 }
 
-export const sendMessage = async (
+export const sendMessageHandler = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
@@ -21,7 +22,7 @@ export const sendMessage = async (
 
     if (!content || !chatID) {
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: " missing chatID or content of message " });
     }
 
@@ -29,7 +30,7 @@ export const sendMessage = async (
 
     if (!userID) {
       return res
-        .status(500)
+        .status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR)
         .json({ message: " Failed to identify user from req " });
     }
 
@@ -53,15 +54,15 @@ export const sendMessage = async (
       latestMessage: message,
     });
 
-    res.status(200).json(message);
-  } catch (err: any) {
+    res.status(HTTP_STATUS_CODES.OK).json(message);
+  } catch (err) {
     console.log(err);
 
     next(err);
   }
 };
 
-export const getAllMessagesOfChat = async (
+export const getAllMessagesOfChatHandler = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
@@ -70,15 +71,17 @@ export const getAllMessagesOfChat = async (
     const chatID = req.params.chatID;
 
     if (!chatID) {
-      return res.status(400).json({ message: "failed to identify chat" }) ;
+      return res
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
+        .json({ message: "failed to identify chat" });
     }
 
     const messages = await Message.find({ chat: chatID })
       .populate("sender", "username email image")
       .populate("chat");
 
-    return res.status(200).json(messages);
-  } catch (err: any) {
+    return res.status(HTTP_STATUS_CODES.OK).json(messages);
+  } catch (err) {
     console.log(err);
 
     next(err);

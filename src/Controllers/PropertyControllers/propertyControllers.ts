@@ -8,43 +8,12 @@ import { HotelReservation } from "../../Models/reservationModal";
 import mongoose from "mongoose";
 import Razorpay from "razorpay";
 import { RazorPayDetails } from "../../Models/razorPayDetailsModal";
-import { ListingData } from "../GeneralData/LisitingData";
+
 import { User } from "../../Models/userModel";
 import { Review } from "../../Models/reviewModel";
-
-const HotelListingSchema = z.object({
-  addressLine: z.string().min(3, " Min length For address is 3").max(20),
-  city: z.string().min(3, " Min length For city is 3").max(15),
-  district: z.string().min(3, " Min length For district is 3").max(15),
-  state: z.string().min(3, " Min length is 3").max(15),
-  totalRooms: z.number().min(1),
-  maxGuests: z.number().min(1),
-  bedsPerRoom: z.number().min(1),
-  bathroomPerRoom: z.number().min(1),
-  amenities: z.array(z.string()),
-  hotelLicenseUrl: z.string().min(1),
-  aboutHotel: z.string().min(20),
-  listingTitle: z.string().min(10).max(60),
-  roomType: z.string().min(3),
-  rentPerNight: z.number().min(1000),
-
-  mainImage: z.string().refine((value) => {
-    return value;
-  }, "Main Img Is Compulsory"),
-
-  otherImages: z.array(z.string()).refine((values) => {
-    let pics = values.filter((val) => val);
-
-    return pics.length >= 4;
-  }, "Needed Four Other Images"),
-
-  pinCode: z.string().refine((value) => {
-    const INDIAN_PINCODE_REGEX = /^[1-9][0-9]{5}$/;
-    return INDIAN_PINCODE_REGEX.test(value);
-  }, "Invalid Indian Pincode"),
-});
-
-type propertyListingData = z.infer<typeof HotelListingSchema>;
+import { HotelListingSchema } from "../../Schemas/hoteslListingSchema";
+import { TGetReqQuery } from "../../Types/getReqQueryType";
+import { HTTP_STATUS_CODES } from "../../Enums/statusCodes";
 
 export interface CustomRequest extends Request {
   userInfo?: {
@@ -52,11 +21,6 @@ export interface CustomRequest extends Request {
     username: string;
     roles: number[];
   };
-}
-
-interface GetListingsReservationsQuery {
-  search: string;
-  page: number;
 }
 
 export const listPropertyHandler = async (
@@ -67,14 +31,12 @@ export const listPropertyHandler = async (
   try {
     const propertyListingData = req.body;
 
-    console.log("\t \t \t \t ", propertyListingData, "...listing ");
-
     const validationResult = HotelListingSchema.safeParse(propertyListingData);
 
     if (!validationResult.success) {
       const validationError: ZodError = validationResult.error;
 
-      res.status(400).json({ message: validationError.errors[0].message });
+      res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: validationError.errors[0].message });
     }
 
     if (validationResult.success) {
@@ -137,9 +99,11 @@ export const listPropertyHandler = async (
 
       await newListing.save();
 
-      return res.status(201).json({ message: "new Listing created" });
+      return res
+        .status(HTTP_STATUS_CODES.CREATED)
+        .json({ message: "new Listing created" });
     }
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -155,7 +119,7 @@ export const checkAvailability = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify user " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify user " });
     }
 
     let { listingID, checkInDate, checkOutDate, rooms } = req.body;
@@ -163,7 +127,7 @@ export const checkAvailability = async (
     listingID = new mongoose.Types.ObjectId(listingID);
 
     if (!listingID || !checkInDate || !checkOutDate || !rooms) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message: "Failed : all data fields are necessary . Try Again ",
       });
     }
@@ -171,14 +135,14 @@ export const checkAvailability = async (
     let listingData = await HotelListing.findById(listingID);
 
     if (!listingData)
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
 
     if (
       !listingData.approvedForReservation ||
       !listingData.isActiveForReservation
     ) {
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "Sorry the property is not available for listing " });
     }
 
@@ -201,7 +165,7 @@ export const checkAvailability = async (
         let existingValue = dateWiseReservation[dateString];
 
         if (existingValue + rooms > listingData.totalRooms) {
-          return res.status(400).json({
+          return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
             message:
               "Unfortunately adequate rooms  not  available in given days",
           });
@@ -212,9 +176,9 @@ export const checkAvailability = async (
     }
 
     return res
-      .status(200)
+      .status(HTTP_STATUS_CODES.OK)
       .json({ message: " Success: Rooms are available for the given days" });
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -227,14 +191,12 @@ export const createReservationOrderHandler = async (
   next: NextFunction
 ) => {
   try {
-    console.log("instance");
 
     let KEY_ID = await process.env.RAZORPAY_KEY_ID;
     let KEY_SECRET = await process.env.RAZORPAY_KEY_SECRET;
 
-    console.log("instance", KEY_ID, KEY_SECRET);
     if (!KEY_ID || !KEY_SECRET) {
-      return res.sendStatus(500);
+      throw new Error('Failed to access key_id or key_secret')
     }
 
     const instance = await new Razorpay({
@@ -245,7 +207,7 @@ export const createReservationOrderHandler = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify host " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify host " });
     }
 
     let { listingID, checkInDate, checkOutDate, rooms } = req.body;
@@ -253,7 +215,7 @@ export const createReservationOrderHandler = async (
     listingID = new mongoose.Types.ObjectId(listingID);
 
     if (!listingID || !checkInDate || !checkOutDate || !rooms) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message: "Failed : all data fields are necessary . Try Again ",
       });
     }
@@ -261,14 +223,14 @@ export const createReservationOrderHandler = async (
     let listingData = await HotelListing.findById(listingID);
 
     if (!listingData)
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
 
     if (
       !listingData.approvedForReservation ||
       !listingData.isActiveForReservation
     ) {
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "Sorry the property is not available for listing " });
     }
 
@@ -293,7 +255,7 @@ export const createReservationOrderHandler = async (
         let existingValue = dateWiseReservation[dateString];
 
         if (existingValue + rooms > listingData.totalRooms) {
-          return res.status(400).json({
+          return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
             message:
               "Unfortunately adequate rooms  not  available in given days",
           });
@@ -305,7 +267,6 @@ export const createReservationOrderHandler = async (
       numberOfDays++;
     }
 
-    console.log("instance after day");
 
     listingData.dateWiseReservationData = dateWiseReservation;
 
@@ -313,7 +274,6 @@ export const createReservationOrderHandler = async (
       dateWiseReservationData: dateWiseReservation,
     });
 
-    console.log(response);
 
     const fee = (listingData?.rentPerNight * numberOfDays * rooms * 10) / 100;
 
@@ -350,18 +310,18 @@ export const createReservationOrderHandler = async (
 
     const order = await instance.orders.create(options);
 
-    if (!order) return res.status(500);
+    if (!order) throw new Error('Failed to create razorpay order')
 
     reservationData.razorpayOrderID = order.id;
 
     await reservationData.save();
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS_CODES.OK).json({
       message: "successfully made reservation",
       order,
       reservationID: reservationData._id,
     });
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -374,12 +334,11 @@ export const validatePaymentAndCompleteReservation = async (
   next: NextFunction
 ) => {
   try {
-    console.log("instance");
 
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify host " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify host " });
     }
 
     let {
@@ -405,7 +364,7 @@ export const validatePaymentAndCompleteReservation = async (
       !razorpayOrderId ||
       !razorpaySignature
     ) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message: "Failed : all data fields are necessary . Try Again ",
       });
     }
@@ -413,14 +372,14 @@ export const validatePaymentAndCompleteReservation = async (
     let listingData = await HotelListing.findById(listingID);
 
     if (!listingData)
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
 
     if (
       !listingData.approvedForReservation ||
       !listingData.isActiveForReservation
     ) {
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "Sorry the property is not available for listing " });
     }
 
@@ -428,20 +387,13 @@ export const validatePaymentAndCompleteReservation = async (
 
     if (!reservationData)
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "failed to find the reservation data " });
 
-    console.log(
-      new mongoose.Types.ObjectId(reservationData.listingID).equals(listingID),
-      "first"
-    );
+    
 
-    console.log(reservationData.razorpayOrderID == orderCreationId, "second");
 
-    console.log(
-      reservationData.reservationFee * 100 == Number(amount),
-      "third"
-    );
+   
 
     if (
       !new mongoose.Types.ObjectId(reservationData.listingID).equals(
@@ -451,7 +403,7 @@ export const validatePaymentAndCompleteReservation = async (
       reservationData.reservationFee * 100 !== Number(amount)
     ) {
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "failed to validate payment data inconsistency" });
     }
 
@@ -472,8 +424,8 @@ export const validatePaymentAndCompleteReservation = async (
 
     await reservationData.save();
 
-    return res.status(200).json({ message: "payment verified successfully" });
-  } catch (err: any) {
+    return res.status(HTTP_STATUS_CODES.OK).json({ message: "payment verified successfully" });
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -486,12 +438,11 @@ export const getAllUserBookings = async (
   next: NextFunction
 ) => {
   try {
-    console.log("instance");
 
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify user " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify user " });
     }
 
     const data = await HotelReservation.aggregate([
@@ -546,9 +497,8 @@ export const getAllUserBookings = async (
       },
     ]);
 
-    console.log(data);
-    return res.status(200).json({ bookings: data });
-  } catch (err: any) {
+    return res.status(HTTP_STATUS_CODES.OK).json({ bookings: data });
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -561,19 +511,18 @@ export const cancelReservationHandler = async (
   next: NextFunction
 ) => {
   try {
-    console.log("instance");
 
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify user " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify user " });
     }
 
     const reservationID = new mongoose.Types.ObjectId(req.params.reservationID);
 
     if (!reservationID) {
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "failed to identify reservation " });
     }
 
@@ -583,7 +532,7 @@ export const cancelReservationHandler = async (
     });
 
     if (!reservation) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message: "failed to identify the specific reservation of user",
       });
     }
@@ -593,11 +542,11 @@ export const cancelReservationHandler = async (
     let listingData = await HotelListing.findById(listingID);
 
     if (!listingData)
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
 
     if (!reservation.checkInDate || !reservation.checkOutDate) {
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "failed to get reservationData " });
     }
 
@@ -642,9 +591,9 @@ export const cancelReservationHandler = async (
     await reservation.save();
 
     return res
-      .status(200)
+      .status(HTTP_STATUS_CODES.OK)
       .json({ message: "reservation cancelled successFully" });
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -660,10 +609,10 @@ export const getAllListingsReservations = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify host " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify host " });
     }
 
-    let queryParams = req.query as unknown as GetListingsReservationsQuery;
+    let queryParams = req.query as unknown as TGetReqQuery;
 
     let search = "";
 
@@ -800,12 +749,11 @@ export const getAllListingsReservations = async (
       },
     ]);
 
-    console.log(totalReservations);
 
     const totalPages = Math.ceil(totalReservations.length / limit);
 
-    return res.status(200).json({ reservations, totalPages });
-  } catch (err: any) {
+    return res.status(HTTP_STATUS_CODES.OK).json({ reservations, totalPages });
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -818,19 +766,18 @@ export const hostCancelReservation = async (
   next: NextFunction
 ) => {
   try {
-    console.log("instance");
 
     const hostID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!hostID) {
-      return res.status(400).json({ message: "failed to identify user " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify user " });
     }
 
     const reservationID = new mongoose.Types.ObjectId(req.params.reservationID);
 
     if (!reservationID) {
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "failed to identify reservation " });
     }
 
@@ -877,24 +824,23 @@ export const hostCancelReservation = async (
     ]);
 
     if (!reservationData) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message: "failed to identify the specific reservation ",
       });
     }
 
     let reservation = reservationData[0];
-    // console.log(reservationData);
 
     const listingID = reservation.listingID;
 
     let listingData = await HotelListing.findById(listingID);
 
     if (!listingData)
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
 
     if (!reservation.checkInDate || !reservation.checkOutDate) {
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "failed to get reservationData " });
     }
 
@@ -922,7 +868,6 @@ export const hostCancelReservation = async (
       }
     }
 
-    console.log(dateWiseReservation, "after \t \t");
 
     const updatedListingData = await HotelListing.findByIdAndUpdate(
       listingID,
@@ -932,7 +877,6 @@ export const hostCancelReservation = async (
       { new: true }
     );
 
-    console.log(updatedListingData, "updated listing \t \t");
 
     const updatedUserData = await User.findByIdAndUpdate(
       reservation.userID,
@@ -942,19 +886,17 @@ export const hostCancelReservation = async (
       { new: true }
     );
 
-    console.log(updatedUserData, "updated listing \t \t");
 
     let updatedReservation = await HotelReservation.findByIdAndUpdate(
       reservationID,
       { reservationStatus: "cancelled", paymentStatus: "refunded" },
       { new: true }
     );
-    console.log(updatedReservation, "updated listing \t \t");
 
     return res
-      .status(200)
+      .status(HTTP_STATUS_CODES.OK)
       .json({ message: "reservation cancelled successFully" });
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -970,7 +912,7 @@ export const getWishlistData = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify user " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify user " });
     }
 
     const wishLists = await User.aggregate([
@@ -1040,10 +982,9 @@ export const getWishlistData = async (
       },
     ]);
 
-    console.log(wishLists);
 
-    return res.status(200).json({ wishLists });
-  } catch (err: any) {
+    return res.status(HTTP_STATUS_CODES.OK).json({ wishLists });
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -1061,7 +1002,7 @@ export const AddToWishlist = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify user " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify user " });
     }
 
     let listingID = new mongoose.Types.ObjectId(req.params.listingID);
@@ -1069,7 +1010,7 @@ export const AddToWishlist = async (
     const userData = await User.findById(userID);
 
     if (!listingID) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message: "Failed to identify  the listingID. Try Again ",
       });
     }
@@ -1077,14 +1018,14 @@ export const AddToWishlist = async (
     let listingData = await HotelListing.findById(listingID);
 
     if (!listingData)
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
 
     if (
       !listingData.approvedForReservation ||
       !listingData.isActiveForReservation
     ) {
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "Sorry the property is not available now " });
     }
 
@@ -1094,7 +1035,7 @@ export const AddToWishlist = async (
       )
     )
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "Hotel already exist in wishlist" });
 
     const updatedUser = await User.findByIdAndUpdate(userID, {
@@ -1103,10 +1044,10 @@ export const AddToWishlist = async (
       },
     });
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS_CODES.OK).json({
       message: "successfully added to wishlist",
     });
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -1124,7 +1065,7 @@ export const removeFromWishlist = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify user " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify user " });
     }
 
     let listingID = new mongoose.Types.ObjectId(req.params.listingID);
@@ -1132,7 +1073,7 @@ export const removeFromWishlist = async (
     const userData = await User.findById(userID);
 
     if (!listingID) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message: "Failed to identify  the listingID. Try Again ",
       });
     }
@@ -1140,7 +1081,7 @@ export const removeFromWishlist = async (
     let listingData = await HotelListing.findById(listingID);
 
     if (!listingData)
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
 
     if (
       !userData?.wishlist.includes(
@@ -1148,7 +1089,7 @@ export const removeFromWishlist = async (
       )
     )
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "Hotel already removed from  wishlist" });
 
     const updatedUser = await User.findByIdAndUpdate(userID, {
@@ -1157,10 +1098,10 @@ export const removeFromWishlist = async (
       },
     });
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS_CODES.OK).json({
       message: "successfully removed from wishlist",
     });
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
 
     next(err);
@@ -1176,7 +1117,7 @@ export const addReview = async (
     const userID = new mongoose.Types.ObjectId(req.userInfo?.id);
 
     if (!userID) {
-      return res.status(400).json({ message: "failed to identify user " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify user " });
     }
 
     let listingID = new mongoose.Types.ObjectId(req.params.listingID);
@@ -1184,7 +1125,7 @@ export const addReview = async (
     const userData = await User.findById(userID);
 
     if (!listingID) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
         message: "Failed to identify  the listingID. Try Again ",
       });
     }
@@ -1192,17 +1133,17 @@ export const addReview = async (
     let listingData = await HotelListing.findById(listingID);
 
     if (!listingData)
-      return res.status(400).json({ message: "failed to identify listing " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "failed to identify listing " });
 
     const { rating, reviewMessage } = req.body;
 
     if (!rating || !reviewMessage) {
-      return res.status(400).json({ message: "All fields are mandatory " });
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "All fields are mandatory " });
     }
 
     if (rating < 1 || rating > 5) {
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "Rating value should be between 1 and 5 " });
     }
 
@@ -1210,7 +1151,7 @@ export const addReview = async (
 
     if (existingReview.length >= 1) {
       return res
-        .status(400)
+        .status(HTTP_STATUS_CODES.BAD_REQUEST)
         .json({ message: "You already made a review on this property " });
     }
 
@@ -1234,9 +1175,8 @@ export const addReview = async (
       $push: { reviews: review._id },
     });
 
-    console.log(updatedListing);
-    return res.status(200).json({ message: "review added" });
-  } catch (err: any) {
+    return res.status(HTTP_STATUS_CODES.OK).json({ message: "review added" });
+  } catch (err) {
     console.log(err);
 
     next(err);
