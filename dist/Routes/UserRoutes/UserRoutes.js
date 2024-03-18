@@ -18,10 +18,12 @@ router.get("/listings", listingsController_1.getAllHostListings);
 router.post("/listing/reserve/createOrder", propertyControllers_1.createReservationOrderHandler);
 // handle payment success
 router.post("/listing/reserve/success", propertyControllers_1.validatePaymentAndCompleteReservation);
+// check is rooms available on a given date for a listing
 router.post("/listing/checkAvailability", propertyControllers_1.checkAvailability);
 // activate and deactivate reservations for listing hosted by user
 router.patch("/listings/activate/:listingID", listingsController_1.activateListing);
 router.patch("/listings/deactivate/:listingID", listingsController_1.deActivateListing);
+// get wishlist data and add and remove from wishlist
 router.get("/listing/wishlist/", propertyControllers_1.getWishlistData);
 router.patch("/listing/wishlist/add/:listingID", propertyControllers_1.AddToWishlist);
 router.patch("/listing/wishlist/remove/:listingID", propertyControllers_1.removeFromWishlist);
@@ -38,9 +40,14 @@ router
     .route("/listing/:listingID")
     .get(listingsController_1.getSingleListingData)
     .patch(listingsController_1.editListingHandler);
+// get data of all bookings by user
 router.get("/bookings", propertyControllers_1.getAllUserBookings);
+// cancel a reservation by user
 router.patch("/bookings/:reservationID", propertyControllers_1.cancelReservationHandler);
+// give data of all reservation to host
 router.get("/reservations/received", propertyControllers_1.getAllListingsReservations);
+// cancel reservation by host
 router.patch("/reservations/received/cancel/:reservationID", propertyControllers_1.hostCancelReservation);
-router.post('/property/list', propertyControllers_1.listPropertyHandler);
+// listing new property
+router.post("/property/list", propertyControllers_1.listPropertyHandler);
 exports.default = router;
