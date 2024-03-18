@@ -24,13 +24,13 @@ import { ROLES_LIST } from "./Enums/userRoles";
 import otpRoute from "./Routes/AuthRoutes/otpRoute";
 import verifyRoles from "./Middlewares/VerifyRoles";
 import loginRoute from "./Routes/AuthRoutes/loginRoute";
+import { HTTP_STATUS_CODES } from "./Enums/statusCodes";
 import userRoutes from "./Routes/UserRoutes/UserRoutes";
 import { verifyJWT } from "./Middlewares/JwtVerification";
 import adminRoutes from "./Routes/AdminRoutes/AdminRoutes";
 import { chatRouter } from "./Routes/ChatRoutes/chatRoutes";
 import { messageRouter } from "./Routes/MessageRoutes/messageRoute";
 import { checkIsUserBlocked } from "./Middlewares/checkIsUserBlocked";
-import { HTTP_STATUS_CODES } from "./Enums/statusCodes";
 
 const app = express();
 
@@ -74,6 +74,8 @@ app.use(verifyJWT);
 
 app.use("/admin", verifyRoles(ROLES_LIST.Admin), adminRoutes);
 
+// check is user blocked by admin before providing access to routes
+
 app.use(checkIsUserBlocked);
 
 app.use("/user", verifyRoles(ROLES_LIST.User), userRoutes);
@@ -83,7 +85,9 @@ app.use("/messages", verifyRoles(ROLES_LIST.User), messageRouter);
 // error handler
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  return res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: "server facing unexpected errors" });
+  return res
+    .status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR)
+    .json({ message: "server facing unexpected errors" });
 });
 
 // 404 Error Middleware

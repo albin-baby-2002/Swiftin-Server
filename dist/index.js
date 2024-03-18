@@ -48,13 +48,13 @@ const userRoles_1 = require("./Enums/userRoles");
 const otpRoute_1 = __importDefault(require("./Routes/AuthRoutes/otpRoute"));
 const VerifyRoles_1 = __importDefault(require("./Middlewares/VerifyRoles"));
 const loginRoute_1 = __importDefault(require("./Routes/AuthRoutes/loginRoute"));
+const statusCodes_1 = require("./Enums/statusCodes");
 const UserRoutes_1 = __importDefault(require("./Routes/UserRoutes/UserRoutes"));
 const JwtVerification_1 = require("./Middlewares/JwtVerification");
 const AdminRoutes_1 = __importDefault(require("./Routes/AdminRoutes/AdminRoutes"));
 const chatRoutes_1 = require("./Routes/ChatRoutes/chatRoutes");
 const messageRoute_1 = require("./Routes/MessageRoutes/messageRoute");
 const checkIsUserBlocked_1 = require("./Middlewares/checkIsUserBlocked");
-const statusCodes_1 = require("./Enums/statusCodes");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3500;
 // connect to mongodb database
@@ -81,13 +81,16 @@ app.use("/listing", listingRoute_1.default);
 // authenticate users using jwt for private routes
 app.use(JwtVerification_1.verifyJWT);
 app.use("/admin", (0, VerifyRoles_1.default)(userRoles_1.ROLES_LIST.Admin), AdminRoutes_1.default);
+// check is user blocked by admin before providing access to routes
 app.use(checkIsUserBlocked_1.checkIsUserBlocked);
 app.use("/user", (0, VerifyRoles_1.default)(userRoles_1.ROLES_LIST.User), UserRoutes_1.default);
 app.use("/chat", (0, VerifyRoles_1.default)(userRoles_1.ROLES_LIST.User), chatRoutes_1.chatRouter);
 app.use("/messages", (0, VerifyRoles_1.default)(userRoles_1.ROLES_LIST.User), messageRoute_1.messageRouter);
 // error handler
 app.use((err, req, res, next) => {
-    return res.status(statusCodes_1.HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: "server facing unexpected errors" });
+    return res
+        .status(statusCodes_1.HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: "server facing unexpected errors" });
 });
 // 404 Error Middleware
 app.use("*", (req, res, next) => {
