@@ -59,6 +59,9 @@ app.use(cookieParser());
 
 app.use(express.json());
 
+app.get("/", (req, res, next) => {
+  res.status(200).json({ message: "welcome to swiftin api" });
+});
 app.use("/register", registerRoute);
 app.use("/otp", otpRoute);
 app.use("/auth", loginRoute);
