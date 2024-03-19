@@ -59,31 +59,31 @@ app.use(cookieParser());
 
 app.use(express.json());
 
-app.get("/", (req, res, next) => {
+app.get("/api", (req, res, next) => {
   res.status(200).json({ message: "welcome to swiftin api" });
 });
-app.use("/register", registerRoute);
-app.use("/otp", otpRoute);
-app.use("/auth", loginRoute);
-app.use("/auth/google", googleAuthRoute);
-app.use("/refreshToken", refreshTokenRoute);
-app.use("/logout", logoutRoute);
-app.use("/search", SearchPageRoute);
-app.use("/listing", listingDataRoute);
+app.use("/api/register", registerRoute);
+app.use("/api/otp", otpRoute);
+app.use("/api/auth", loginRoute);
+app.use("/api/auth/google", googleAuthRoute);
+app.use("/api/refreshToken", refreshTokenRoute);
+app.use("/api/logout", logoutRoute);
+app.use("/api/search", SearchPageRoute);
+app.use("/api/listing", listingDataRoute);
 
 // authenticate users using jwt for private routes
 
 app.use(verifyJWT);
 
-app.use("/admin", verifyRoles(ROLES_LIST.Admin), adminRoutes);
+app.use("/api/admin", verifyRoles(ROLES_LIST.Admin), adminRoutes);
 
 // check is user blocked by admin before providing access to routes
 
 app.use(checkIsUserBlocked);
 
-app.use("/user", verifyRoles(ROLES_LIST.User), userRoutes);
-app.use("/chat", verifyRoles(ROLES_LIST.User), chatRouter);
-app.use("/messages", verifyRoles(ROLES_LIST.User), messageRouter);
+app.use("/api/user", verifyRoles(ROLES_LIST.User), userRoutes);
+app.use("/api/chat", verifyRoles(ROLES_LIST.User), chatRouter);
+app.use("/api/messages", verifyRoles(ROLES_LIST.User), messageRouter);
 
 // error handler
 

@@ -70,22 +70,25 @@ app.use((0, cors_1.default)(corsOptions_1.default));
 app.use("/public", express_1.default.static(path_1.default.join(__dirname, "..", "public")));
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
-app.use("/register", RegisterRoute_1.default);
-app.use("/otp", otpRoute_1.default);
-app.use("/auth", loginRoute_1.default);
-app.use("/auth/google", googleAuthRoute_1.default);
-app.use("/refreshToken", RefreshTokenRoute_1.default);
-app.use("/logout", LogoutRoute_1.default);
-app.use("/search", SearchPageRoute_1.default);
-app.use("/listing", listingRoute_1.default);
+app.get("/api", (req, res, next) => {
+    res.status(200).json({ message: "welcome to swiftin api" });
+});
+app.use("/api/register", RegisterRoute_1.default);
+app.use("/api/otp", otpRoute_1.default);
+app.use("/api/auth", loginRoute_1.default);
+app.use("/api/auth/google", googleAuthRoute_1.default);
+app.use("/api/refreshToken", RefreshTokenRoute_1.default);
+app.use("/api/logout", LogoutRoute_1.default);
+app.use("/api/search", SearchPageRoute_1.default);
+app.use("/api/listing", listingRoute_1.default);
 // authenticate users using jwt for private routes
 app.use(JwtVerification_1.verifyJWT);
-app.use("/admin", (0, VerifyRoles_1.default)(userRoles_1.ROLES_LIST.Admin), AdminRoutes_1.default);
+app.use("/api/admin", (0, VerifyRoles_1.default)(userRoles_1.ROLES_LIST.Admin), AdminRoutes_1.default);
 // check is user blocked by admin before providing access to routes
 app.use(checkIsUserBlocked_1.checkIsUserBlocked);
-app.use("/user", (0, VerifyRoles_1.default)(userRoles_1.ROLES_LIST.User), UserRoutes_1.default);
-app.use("/chat", (0, VerifyRoles_1.default)(userRoles_1.ROLES_LIST.User), chatRoutes_1.chatRouter);
-app.use("/messages", (0, VerifyRoles_1.default)(userRoles_1.ROLES_LIST.User), messageRoute_1.messageRouter);
+app.use("/api/user", (0, VerifyRoles_1.default)(userRoles_1.ROLES_LIST.User), UserRoutes_1.default);
+app.use("/api/chat", (0, VerifyRoles_1.default)(userRoles_1.ROLES_LIST.User), chatRoutes_1.chatRouter);
+app.use("/api/messages", (0, VerifyRoles_1.default)(userRoles_1.ROLES_LIST.User), messageRoute_1.messageRouter);
 // error handler
 app.use((err, req, res, next) => {
     return res
