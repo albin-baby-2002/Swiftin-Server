@@ -71,6 +71,7 @@ app.use("/api/logout", logoutRoute);
 app.use("/api/search", SearchPageRoute);
 app.use("/api/listing", listingDataRoute);
 
+
 // authenticate users using jwt for private routes
 
 app.use(verifyJWT);
