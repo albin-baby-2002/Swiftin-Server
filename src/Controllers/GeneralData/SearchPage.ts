@@ -75,7 +75,7 @@ export const listingsDataBySearchHandler = async (
       }
     }
 
-    let limit = 8;
+    let limit = 16;
 
   
 

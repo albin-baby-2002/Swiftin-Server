@@ -14,6 +14,7 @@ export const googleAuthHandler = async (
   next: NextFunction
 ) => {
   try {
+    
     const oAuth2Client = new OAuth2Client(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
