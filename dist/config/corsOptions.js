@@ -9,7 +9,7 @@ const corsOptions = {
             callback(null, true);
         }
         else {
-            callback(new Error("Not allowed by Cors"), false);
+            callback(new Error("Not allowed by Cors" + origin), false);
         }
     },
     credentials: true, // Allow credentials (e.g., cookies)

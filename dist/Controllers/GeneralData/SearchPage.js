@@ -56,7 +56,7 @@ const listingsDataBySearchHandler = (req, res, next) => __awaiter(void 0, void 0
                 sortBy = 1;
             }
         }
-        let limit = 8;
+        let limit = 16;
         let filterQuery = {
             $or: [
                 { state: { $regex: search, $options: "i" } },

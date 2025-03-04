@@ -42,7 +42,7 @@ connectDB();
 
 // access-control-allow-credentials
 
-app.use(credentials);
+app.use(credentials); 
 
 // console req url
 
