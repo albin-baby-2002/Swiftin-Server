@@ -5,7 +5,7 @@ export const allowedOrigins = [
   'http://swiftin.online',
   'http://www.swiftin.online',
   'https://swiftin.online',
-  'https://swift-in-client-sigma.vercel.app/',
+  'https://swift-in-client-sigma.vercel.app',
   'http://swift-in-client-sigma.vercel.app',
   'https://www.swiftin.online',
 ];
